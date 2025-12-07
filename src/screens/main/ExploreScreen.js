@@ -12,8 +12,15 @@ import ServiceCard from '../../components/ServiceCard';
 export default function ExploreScreen({ navigation }) {
     const [searchQuery, setSearchQuery] = useState('');
 
-    const trendingServices = SERVICES.filter(s => s.rating >= 4.8).slice(0, 5);
-    const topRatedServices = SERVICES.filter(s => s.rating >= 4.7).slice(5, 10);
+    // Filter services based on search query
+    const filteredServices = SERVICES.filter(s =>
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.keywords?.some(k => k.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+
+    const trendingServices = filteredServices.filter(s => s.rating >= 4.8).slice(0, 5);
+    const topRatedServices = filteredServices.filter(s => s.rating >= 4.7).slice(5, 10);
+    const featuredServices = filteredServices.filter(s => s.isPopular).slice(0, 5);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -23,6 +30,7 @@ export default function ExploreScreen({ navigation }) {
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                 {/* Header */}
                 <Text style={styles.headerTitle}>Explore</Text>
+                <Text style={styles.headerSubtitle}>Discover what's trending in your neighborhood.</Text>
 
                 {/* Search Bar */}
                 <View style={styles.searchContainer}>
@@ -47,7 +55,7 @@ export default function ExploreScreen({ navigation }) {
                     <Text style={styles.sectionTitle}>Featured For You</Text>
                 </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalList}>
-                    {FEATURED_SERVICES.map((service) => (
+                    {featuredServices.map((service) => (
                         <ServiceCard
                             key={service.id}
                             service={service}
@@ -117,7 +125,13 @@ const styles = StyleSheet.create({
         fontSize: 28,
         fontWeight: 'bold',
         color: COLORS.text,
+        marginBottom: 4,
+    },
+    headerSubtitle: {
+        fontSize: 14,
+        color: COLORS.textLight,
         marginBottom: THEME.spacing.m,
+        fontStyle: 'italic',
     },
     searchContainer: {
         flexDirection: 'row',

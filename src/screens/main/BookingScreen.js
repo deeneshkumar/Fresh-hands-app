@@ -13,14 +13,21 @@ export default function BookingScreen({ route, navigation }) {
     const { service } = route.params;
     const { user } = useAuth();
 
-    const [date, setDate] = useState(new Date());
+    const [date, setDate] = useState(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
 
-    const [time, setTime] = useState(new Date());
+    const [time, setTime] = useState(null);
     const [showTimePicker, setShowTimePicker] = useState(false);
 
     const [address, setAddress] = useState(user?.city || '');
-    const [paymentMethod, setPaymentMethod] = useState('cash');
+    const [addressError, setAddressError] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState(null);
+
+    // Cost Calculations
+    const itemTotal = Number(service.price);
+    const convenienceFee = 49;
+    const taxes = Math.round(itemTotal * 0.18);
+    const grandTotal = itemTotal + convenienceFee + taxes;
 
     const onDateChange = (event, selectedDate) => {
         setShowDatePicker(Platform.OS === 'ios');
@@ -44,20 +51,6 @@ export default function BookingScreen({ route, navigation }) {
             Alert.alert('Location', 'Fetching current location... (Mock: Chennai, India)');
             setAddress('Chennai, India');
         }
-    };
-
-    const handleConfirm = () => {
-        if (!address) {
-            Alert.alert('Missing Details', 'Please provide a service address.');
-            return;
-        }
-        navigation.navigate('OrderConfirmation', {
-            service,
-            date: date.toDateString(),
-            time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            address,
-            paymentMethod
-        });
     };
 
     const PaymentOption = ({ id, icon: Icon, label }) => (
@@ -86,23 +79,27 @@ export default function BookingScreen({ route, navigation }) {
                     <Text style={styles.servicePrice}>₹{service.price}</Text>
                 </View>
 
-                <Text style={styles.sectionTitle}>Select Date & Time</Text>
+                <Text style={styles.sectionTitle}>Select Date & Time <Text style={{ color: COLORS.error }}>*</Text></Text>
 
                 <View style={styles.pickerRow}>
                     <TouchableOpacity style={styles.pickerButton} onPress={() => setShowDatePicker(true)}>
-                        <Calendar color={COLORS.primary} size={20} />
-                        <Text style={styles.pickerText}>{date.toDateString()}</Text>
+                        <Calendar color={date ? COLORS.primary : COLORS.textLight} size={20} />
+                        <Text style={[styles.pickerText, !date && styles.placeholderText]}>
+                            {date ? date.toDateString() : 'Select Date *'}
+                        </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.pickerButton} onPress={() => setShowTimePicker(true)}>
-                        <Clock color={COLORS.primary} size={20} />
-                        <Text style={styles.pickerText}>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                        <Clock color={time ? COLORS.primary : COLORS.textLight} size={20} />
+                        <Text style={[styles.pickerText, !time && styles.placeholderText]}>
+                            {time ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Choose Time *'}
+                        </Text>
                     </TouchableOpacity>
                 </View>
 
                 {showDatePicker && (
                     <DateTimePicker
-                        value={date}
+                        value={date || new Date()}
                         mode="date"
                         display="default"
                         onChange={onDateChange}
@@ -112,39 +109,105 @@ export default function BookingScreen({ route, navigation }) {
 
                 {showTimePicker && (
                     <DateTimePicker
-                        value={time}
+                        value={time || new Date()}
                         mode="time"
                         display="default"
                         onChange={onTimeChange}
                     />
                 )}
 
-                <Text style={styles.sectionTitle}>Service Address</Text>
+                <Text style={styles.sectionTitle}>Service Address <Text style={{ color: COLORS.error }}>*</Text></Text>
                 <View style={styles.addressContainer}>
                     <Input
-                        placeholder="Enter full address"
+                        placeholder="Enter full address *"
                         value={address}
-                        onChangeText={setAddress}
+                        onChangeText={(text) => {
+                            setAddress(text);
+                            if (text.trim()) setAddressError('');
+                        }}
                         style={styles.addressInput}
+                        error={addressError}
                     />
                     <TouchableOpacity style={styles.locationButton} onPress={handleUseCurrentLocation}>
                         <Navigation color={COLORS.white} size={20} />
                     </TouchableOpacity>
                 </View>
 
-                <Text style={styles.sectionTitle}>Payment Method</Text>
+                <Text style={styles.sectionTitle}>Payment Method <Text style={{ color: COLORS.error }}>*</Text></Text>
                 <View style={styles.paymentContainer}>
                     <PaymentOption id="card" icon={CreditCard} label="Card" />
                     <PaymentOption id="upi" icon={Wallet} label="UPI" />
                     <PaymentOption id="cash" icon={Banknote} label="Cash" />
                 </View>
 
-                <View style={styles.totalContainer}>
-                    <Text style={styles.totalLabel}>Total Amount</Text>
-                    <Text style={styles.totalAmount}>₹{service.price}</Text>
+                {/* Bill Details */}
+                <View style={styles.billContainer}>
+                    <Text style={styles.billTitle}>Bill Details</Text>
+                    <View style={styles.billRow}>
+                        <Text style={styles.billLabel}>Item Total</Text>
+                        <Text style={styles.billValue}>₹{itemTotal}</Text>
+                    </View>
+                    <View style={styles.billRow}>
+                        <Text style={styles.billLabel}>Convenience Fee</Text>
+                        <Text style={styles.billValue}>₹{convenienceFee}</Text>
+                    </View>
+                    <View style={styles.billRow}>
+                        <Text style={styles.billLabel}>Taxes (18%)</Text>
+                        <Text style={styles.billValue}>₹{taxes}</Text>
+                    </View>
+                    <View style={styles.divider} />
+                    <View style={styles.billRowTotal}>
+                        <Text style={styles.totalLabel}>To Pay</Text>
+                        <Text style={styles.totalAmount}>₹{grandTotal}</Text>
+                    </View>
                 </View>
 
-                <Button title="Confirm Booking" onPress={handleConfirm} />
+                <Button
+                    title="Proceed to Pay"
+                    onPress={() => {
+                        let isValid = true;
+
+                        // Validate Date
+                        if (!date) {
+                            Alert.alert('Missing Details', 'Please select a date for the service.');
+                            isValid = false;
+                        }
+                        // Validate Time
+                        else if (!time) {
+                            Alert.alert('Missing Details', 'Please choose a time for the service.');
+                            isValid = false;
+                        }
+                        // Validate Address
+                        else if (!address.trim()) {
+                            setAddressError('Service address is required');
+                            Alert.alert('Missing Details', 'Please provide a valid service address.');
+                            isValid = false;
+                        }
+                        // Validate Payment
+                        else if (!paymentMethod) {
+                            Alert.alert('Missing Details', 'Please select a payment method.');
+                            isValid = false;
+                        }
+
+                        if (!isValid) return;
+
+                        navigation.navigate('Payment', {
+                            orderDetails: {
+                                service,
+                                date: date.toDateString(),
+                                time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                address: address.trim(),
+                                paymentMethod,
+                                billDetails: {
+                                    itemTotal,
+                                    convenienceFee,
+                                    taxes,
+                                    grandTotal
+                                }
+                            }
+                        });
+                    }}
+                />
             </ScrollView>
         </SafeAreaView>
     );
@@ -210,6 +273,9 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontWeight: '500',
     },
+    placeholderText: {
+        color: COLORS.textLight,
+    },
     addressContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -257,14 +323,41 @@ const styles = StyleSheet.create({
         color: COLORS.primary,
         fontWeight: 'bold',
     },
-    totalContainer: {
+    billContainer: {
+        backgroundColor: COLORS.surface,
+        padding: THEME.spacing.m,
+        borderRadius: THEME.borderRadius.m,
+        marginBottom: THEME.spacing.l,
+    },
+    billTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: THEME.spacing.m,
+        color: COLORS.text,
+    },
+    billRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        marginVertical: THEME.spacing.l,
-        paddingTop: THEME.spacing.m,
-        borderTopWidth: 1,
-        borderTopColor: COLORS.border,
+        marginBottom: 8,
+    },
+    billLabel: {
+        color: COLORS.textLight,
+        fontSize: 14,
+    },
+    billValue: {
+        color: COLORS.text,
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: COLORS.border,
+        marginVertical: 8,
+    },
+    billRowTotal: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 4,
     },
     totalLabel: {
         fontSize: 18,
@@ -272,7 +365,7 @@ const styles = StyleSheet.create({
         color: COLORS.text,
     },
     totalAmount: {
-        fontSize: 24,
+        fontSize: 18,
         fontWeight: 'bold',
         color: COLORS.primary,
     },

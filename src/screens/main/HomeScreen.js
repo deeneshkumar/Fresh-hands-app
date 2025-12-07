@@ -7,12 +7,23 @@ import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 import { POPULAR_SERVICES, SERVICES, CATEGORIES } from '../../constants/dummyData';
 import { useAuth } from '../../context/AuthContext';
+import { useOrder } from '../../context/OrderContext';
 import Banner from '../../components/Banner';
 import ServiceCard from '../../components/ServiceCard';
 import Footer from '../../components/Footer';
+import OrderDetailsModal from './OrderDetailsModal';
+
+import AddressModal from './AddressModal';
 
 export default function HomeScreen({ navigation }) {
-    const { user } = useAuth();
+    const { user, location, updateLocation } = useAuth(); // Use location from context
+    const { activeOrder } = useOrder();
+    const [showOrderModal, setShowOrderModal] = useState(false);
+    const [showAddressModal, setShowAddressModal] = useState(false);
+
+    const handleSelectLocation = (loc) => {
+        updateLocation(loc); // Update global context
+    };
 
     const renderServiceCard = (service) => (
         <ServiceCard
@@ -26,9 +37,9 @@ export default function HomeScreen({ navigation }) {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Background Theme */}
+                {/* Background Theme - Soft, unique cream gradient */}
                 <LinearGradient
-                    colors={[COLORS.primary + '20', 'transparent']}
+                    colors={['#edc4adff', '#FFFFFF']} // Soft Cream to White
                     style={styles.backgroundTheme}
                 />
 
@@ -43,9 +54,23 @@ export default function HomeScreen({ navigation }) {
 
                         <View style={styles.locationWrapper}>
                             <Text style={styles.locationLabel}>Current Location</Text>
-                            <TouchableOpacity style={styles.locationContainer}>
+                            <TouchableOpacity
+                                style={styles.locationContainer}
+                                onPress={() => setShowAddressModal(true)}
+                                activeOpacity={0.8}
+                            >
                                 <MapPin color={COLORS.primary} size={16} />
-                                <Text style={styles.locationText}>{user?.city || 'Select Location'}</Text>
+                                <View style={styles.addressBox}>
+                                    <Text
+                                        style={styles.locationText}
+                                        numberOfLines={1}
+                                        ellipsizeMode="tail"
+                                        adjustsFontSizeToFit={true}
+                                        minimumFontScale={0.8}
+                                    >
+                                        {location?.address || user?.city ? (location?.address || `${user.city}, India`) : 'Select Location'}
+                                    </Text>
+                                </View>
                                 <ChevronDown color={COLORS.text} size={16} />
                             </TouchableOpacity>
                         </View>
@@ -57,30 +82,32 @@ export default function HomeScreen({ navigation }) {
                 </View>
 
                 {/* Hero Content */}
-                <View style={styles.heroContainer}>
+                <View style={[styles.heroContainer, { paddingHorizontal: THEME.spacing.m }]}>
                     <Text style={styles.heroTitle}>Welcome back, {user?.name?.split(' ')[0] || 'Guest'}!</Text>
-                    <Text style={styles.heroSubtitle}>What can we help you with today?</Text>
+                    <View style={styles.taglineContainer}>
+                        <Text style={styles.taglineText}>Expertise you can trust, right at your doorstep.</Text>
+                    </View>
                 </View>
 
                 {/* Slogan 1 */}
-                <View style={styles.sloganContainer}>
+                <View style={[styles.sloganContainer, { marginBottom: 2 }]}>
                     <Sparkles color={COLORS.secondary} size={16} style={{ marginRight: 8 }} />
-                    <Text style={styles.sloganText}>Exclusive Offers Just For You</Text>
+                    <Text style={styles.sloganText}>Unbeatable Offers, Just for You! ✨</Text>
                 </View>
 
                 {/* Banner */}
-                <Banner />
+                <Banner containerStyle={{ marginHorizontal: THEME.spacing.m, marginBottom: 8 }} />
 
                 {/* Slogan 2 */}
-                <View style={styles.sloganContainer}>
-                    <Text style={styles.sloganTextSecondary}>Explore Our Top Categories</Text>
+                <View style={[styles.sloganContainer, { marginBottom: 10, marginTop: 0, paddingTop: 4 }]}>
+                    <Text style={[styles.sloganTextSecondary, { textAlign: 'center', marginHorizontal: 20 }]}>Browse Our Top-Rated Categories</Text>
                 </View>
 
                 {/* Categories - 2 Rows Horizontal Scroll */}
-                <View style={styles.sectionHeader}>
+                <View style={[styles.sectionHeader, { paddingHorizontal: THEME.spacing.m }]}>
                     <Text style={styles.sectionTitle}>Categories</Text>
                 </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll} contentContainerStyle={{ paddingHorizontal: THEME.spacing.m }}>
                     {CATEGORIES.map((cat) => (
                         <TouchableOpacity
                             key={cat.id}
@@ -114,24 +141,21 @@ export default function HomeScreen({ navigation }) {
                     ))}
                 </ScrollView>
 
-                {/* Slogan 2 */}
-                <View style={styles.sloganContainer}>
-                    <Text style={styles.sloganTextSecondary}>Most Booked Services This Week</Text>
-                </View>
+
 
                 {/* Popular Services */}
-                <View style={styles.sectionHeader}>
+                <View style={[styles.sectionHeader, { paddingHorizontal: THEME.spacing.m }]}>
                     <Text style={styles.sectionTitle}>Popular Services</Text>
                     <TouchableOpacity onPress={() => navigation.navigate('Fresh Hands')}>
                         <Text style={styles.seeAll}>See All</Text>
                     </TouchableOpacity>
                 </View>
 
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.popularList}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.popularList} contentContainerStyle={{ paddingHorizontal: THEME.spacing.m }}>
                     {POPULAR_SERVICES.map(renderServiceCard)}
                 </ScrollView>
 
-                {/* Pagination Dots for Popular Services (Visual Only as ScrollView doesn't easily support index tracking without onScroll) */}
+                {/* Pagination Dots */}
                 <View style={styles.paginationDots}>
                     <View style={[styles.dot, styles.activeDot]} />
                     <View style={styles.dot} />
@@ -139,12 +163,45 @@ export default function HomeScreen({ navigation }) {
                 </View>
 
                 {/* Footer Branding */}
-                <Footer />
-            </ScrollView>
-        </SafeAreaView>
+                <View style={{ paddingHorizontal: THEME.spacing.m }}>
+                    <Footer />
+                </View>
+            </ScrollView >
+
+            <AddressModal
+                visible={showAddressModal}
+                onClose={() => setShowAddressModal(false)}
+                onSelectLocation={handleSelectLocation}
+                currentAddress={location?.address}
+            />
+
+            {/* Live Order Card */}
+            {
+                activeOrder && (
+                    <TouchableOpacity
+                        style={styles.liveOrderCard}
+                        onPress={() => setShowOrderModal(true)}
+                        activeOpacity={0.9}
+                    >
+                        <View style={styles.liveOrderInfo}>
+                            <Text style={styles.liveOrderTitle}>Ongoing Service</Text>
+                            <Text style={styles.liveOrderStatus}>{activeOrder.status} • {activeOrder.eta}</Text>
+                        </View>
+                        <View style={styles.liveOrderBadge}>
+                            <Text style={styles.liveOrderBadgeText}>Track</Text>
+                        </View>
+                    </TouchableOpacity>
+                )
+            }
+
+            <OrderDetailsModal
+                visible={showOrderModal}
+                onClose={() => setShowOrderModal(false)}
+                order={activeOrder}
+            />
+        </SafeAreaView >
     );
 }
-
 
 const styles = StyleSheet.create({
     container: {
@@ -161,30 +218,34 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 30,
     },
     content: {
-        padding: THEME.spacing.m,
+        // padding: THEME.spacing.m, // Removed padding from whole content
         paddingBottom: 20,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: THEME.spacing.m,
+        paddingHorizontal: THEME.spacing.m,
+        paddingVertical: THEME.spacing.s,
+        backgroundColor: COLORS.white, // Clean White Header
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(0,0,0,0.05)',
-        paddingBottom: THEME.spacing.s,
+        borderBottomColor: COLORS.border,
+        elevation: 0, // Minimal
+        zIndex: 100,
     },
     headerLeft: {
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1, // Allow taking up space
+        marginRight: THEME.spacing.m,
     },
     logoButton: {
         marginRight: THEME.spacing.m,
-        backgroundColor: COLORS.surface,
+        backgroundColor: COLORS.white,
         borderRadius: 20,
         padding: 4,
         borderWidth: 1,
         borderColor: COLORS.border,
-        elevation: 2,
     },
     logoIcon: {
         width: 32,
@@ -201,46 +262,69 @@ const styles = StyleSheet.create({
     },
     locationWrapper: {
         justifyContent: 'center',
+        flex: 1,
+        marginLeft: 8,
     },
     locationLabel: {
-        fontSize: 12,
-        color: COLORS.textLight,
+        fontSize: 10,
+        color: COLORS.textLight, // Grey text
         marginBottom: 2,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        fontWeight: '600',
     },
     locationContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+        paddingVertical: 2,
+        alignSelf: 'flex-start',
+        maxWidth: '100%',
+    },
+    addressBox: {
+        flex: 1,
+        marginHorizontal: 4,
     },
     locationText: {
-        marginLeft: 4,
-        marginRight: 4,
         fontWeight: 'bold',
-        fontSize: 16,
-        color: COLORS.text,
+        fontSize: 14,
+        color: COLORS.text, // Black text
     },
     profileButton: {
         padding: 8,
         borderRadius: 20,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.background, // Light grey circle
     },
     heroContainer: {
-        marginBottom: THEME.spacing.l,
-        marginTop: THEME.spacing.s,
+        marginBottom: THEME.spacing.s, // Reduced from l to s for tighter spacing
+        marginTop: THEME.spacing.m,
     },
     heroTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: COLORS.text,
+        color: COLORS.text, // Black text
         marginBottom: 4,
     },
     heroSubtitle: {
         fontSize: 16,
-        color: COLORS.textLight,
+        color: COLORS.textLight, // Grey text
+        marginBottom: 12,
+    },
+    taglineContainer: {
+        backgroundColor: COLORS.primary + '15', // Subtle primary tint
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+        alignSelf: 'flex-start',
+    },
+    taglineText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: COLORS.primary, // Primary text
+        fontStyle: 'italic',
     },
     sloganContainer: {
         marginBottom: THEME.spacing.m,
+        paddingTop: 8,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -295,15 +379,14 @@ const styles = StyleSheet.create({
     categoriesScroll: {
         marginBottom: THEME.spacing.l,
     },
-
     categoryCard: {
         width: 160,
-        height: 200, // Matched to ServiceCard height approx + extra content
+        height: 200,
         marginRight: THEME.spacing.m,
         backgroundColor: COLORS.white,
         borderRadius: THEME.borderRadius.m,
-        marginBottom: THEME.spacing.m, // Added margin bottom for shadow
-        elevation: 3, // Matched ServiceCard
+        marginBottom: THEME.spacing.m,
+        elevation: 3,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -311,7 +394,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     categoryIconContainer: {
-        height: 100,
+        height: 100, // Reduced from 100
         width: '100%',
         backgroundColor: COLORS.surface,
         justifyContent: 'center',
@@ -363,5 +446,46 @@ const styles = StyleSheet.create({
         fontSize: 9,
         color: COLORS.textLight,
         marginLeft: 2,
+    },
+    liveOrderCard: {
+        position: 'absolute',
+        bottom: 80, // Above tabs
+        left: 20,
+        right: 86, // Leave space for chat button
+        backgroundColor: COLORS.secondary,
+        borderRadius: THEME.borderRadius.m,
+        padding: THEME.spacing.m,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+    },
+    liveOrderInfo: {
+        flex: 1,
+    },
+    liveOrderTitle: {
+        color: COLORS.white,
+        fontWeight: 'bold',
+        fontSize: 14,
+    },
+    liveOrderStatus: {
+        color: COLORS.white,
+        fontSize: 12,
+        opacity: 0.9,
+    },
+    liveOrderBadge: {
+        backgroundColor: COLORS.white,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 4,
+    },
+    liveOrderBadgeText: {
+        color: COLORS.secondary,
+        fontWeight: 'bold',
+        fontSize: 10,
     },
 });

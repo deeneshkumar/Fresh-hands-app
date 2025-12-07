@@ -39,7 +39,8 @@ export default function PartnerScreen() {
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                 <Text style={styles.title}>Partner with Fresh Hands</Text>
-                <Text style={styles.subtitle}>Join our network of professionals and grow your business.</Text>
+                <Text style={styles.subtitle}>Empowering Professionals. Delivering Excellence.</Text>
+                <Text style={styles.description}>Join our network of professionals and grow your business.</Text>
 
                 {/* Benefits Section */}
                 <Text style={styles.sectionTitle}>Why Partner with Us?</Text>
@@ -119,7 +120,15 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 16,
         color: COLORS.textLight,
+        marginBottom: 8,
+        fontWeight: '600',
+        color: COLORS.primary,
+    },
+    description: {
+        fontSize: 14,
+        color: COLORS.textLight,
         marginBottom: THEME.spacing.xl,
+        lineHeight: 20,
     },
     sectionTitle: {
         fontSize: 20,

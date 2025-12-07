@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
         bottom: 80, // Moved up to avoid tab bar
         left: THEME.spacing.m,
         right: THEME.spacing.m,
-        backgroundColor: COLORS.text, // Dark background
+        backgroundColor: '#997406ff', // Yellow background
         borderRadius: THEME.borderRadius.m,
         padding: THEME.spacing.m,
         elevation: 10,
@@ -67,11 +67,11 @@ const styles = StyleSheet.create({
         marginBottom: THEME.spacing.s,
     },
     status: {
-        color: COLORS.white,
+        color: '#000000',
         fontWeight: 'bold',
     },
     eta: {
-        color: COLORS.secondary,
+        color: '#000000',
         fontWeight: 'bold',
     },
     content: {
@@ -93,18 +93,19 @@ const styles = StyleSheet.create({
         marginRight: THEME.spacing.s,
     },
     partnerName: {
-        color: COLORS.white,
+        color: '#000000',
         fontWeight: 'bold',
     },
     serviceName: {
-        color: COLORS.textLight,
+        color: '#333333',
         fontSize: 12,
     },
     callButton: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: COLORS.white,
+        borderRadius: 20,
+        backgroundColor: '#000000',
         justifyContent: 'center',
         alignItems: 'center',
     },

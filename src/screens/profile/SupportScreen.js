@@ -5,7 +5,7 @@ import { MessageCircle, Phone, Mail, HelpCircle } from 'lucide-react-native';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 
-export default function SupportScreen() {
+export default function SupportScreen({ navigation }) {
     const handleCall = () => Linking.openURL('tel:1800123456');
     const handleEmail = () => Linking.openURL('mailto:support@freshhands.com');
 
@@ -31,7 +31,7 @@ export default function SupportScreen() {
                     icon={MessageCircle}
                     title="Chat with Us"
                     subtitle="Start a live chat for instant support"
-                    onPress={() => { }}
+                    onPress={() => navigation.navigate('FloatingChatButton')}
                 />
                 <SupportItem
                     icon={Phone}

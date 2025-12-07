@@ -15,7 +15,7 @@ export default function ProfileScreen({ navigation }) {
         { icon: Tag, label: 'My Vouchers', onPress: () => navigation.navigate('Vouchers') },
         { icon: Gift, label: 'Rewards', onPress: () => navigation.navigate('Rewards') },
         { icon: Settings, label: 'Settings', onPress: () => navigation.navigate('Settings') },
-        { icon: MessageCircle, label: 'Chat With Us', onPress: () => navigation.navigate('Support') },
+        { icon: MessageCircle, label: 'Chat With Us', onPress: () => navigation.navigate('Chat') },
         { icon: Phone, label: 'Contact Us', onPress: () => navigation.navigate('Support') },
     ];
 

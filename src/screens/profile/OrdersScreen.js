@@ -1,23 +1,20 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Package, Clock, CheckCircle } from 'lucide-react-native';
+import { Package, Clock } from 'lucide-react-native';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
-
-const ORDERS = [
-    { id: '1', service: 'Home Cleaning', date: '2023-10-25', status: 'Completed', price: '999' },
-    { id: '2', service: 'Plumbing Repair', date: '2023-11-02', status: 'Completed', price: '299' },
-    { id: '3', service: 'AC Service', date: '2023-11-15', status: 'Cancelled', price: '599' },
-];
+import { useOrder } from '../../context/OrderContext';
 
 export default function OrdersScreen() {
+    const { orderHistory } = useOrder();
+
     const renderItem = ({ item }) => (
         <View style={styles.card}>
             <View style={styles.cardHeader}>
                 <View style={styles.serviceRow}>
                     <Package color={COLORS.primary} size={20} />
-                    <Text style={styles.serviceName}>{item.service}</Text>
+                    <Text style={styles.serviceName}>{item.serviceName || item.service?.name || 'Service'}</Text>
                 </View>
                 <Text style={[styles.status, { color: item.status === 'Completed' ? COLORS.success : COLORS.error }]}>
                     {item.status}
@@ -26,9 +23,11 @@ export default function OrdersScreen() {
             <View style={styles.cardFooter}>
                 <View style={styles.metaRow}>
                     <Clock color={COLORS.textLight} size={14} />
-                    <Text style={styles.date}>{item.date}</Text>
+                    <Text style={styles.date}>
+                        {item.completedAt ? new Date(item.completedAt).toLocaleDateString() : new Date().toLocaleDateString()}
+                    </Text>
                 </View>
-                <Text style={styles.price}>₹{item.price}</Text>
+                <Text style={styles.price}>₹{item.price || item.service?.price || '0'}</Text>
             </View>
         </View>
     );
@@ -39,11 +38,17 @@ export default function OrdersScreen() {
                 <Text style={styles.title}>My Orders</Text>
             </View>
             <FlatList
-                data={ORDERS}
+                data={orderHistory}
                 renderItem={renderItem}
                 keyExtractor={item => item.id}
                 contentContainerStyle={styles.list}
-                ListEmptyComponent={<Text style={styles.emptyText}>No orders found</Text>}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Package color={COLORS.textLight} size={48} style={{ opacity: 0.5 }} />
+                        <Text style={styles.emptyText}>No past orders found</Text>
+                        <Text style={styles.emptySubText}>Book a service to see it here</Text>
+                    </View>
+                }
             />
         </SafeAreaView>
     );
@@ -67,6 +72,7 @@ const styles = StyleSheet.create({
     },
     list: {
         padding: THEME.spacing.m,
+        flexGrow: 1,
     },
     card: {
         backgroundColor: COLORS.surface,
@@ -115,9 +121,21 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: COLORS.primary,
     },
+    emptyContainer: {
+        alignItems: 'center',
+        marginTop: 100,
+    },
     emptyText: {
         textAlign: 'center',
-        marginTop: 50,
+        marginTop: THEME.spacing.m,
+        color: COLORS.text,
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    emptySubText: {
+        textAlign: 'center',
+        marginTop: 4,
         color: COLORS.textLight,
+        fontSize: 14,
     },
 });

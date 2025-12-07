@@ -42,7 +42,7 @@ export default function SplashScreen() {
                     <Hand color={COLORS.primary} size={60} />
                 </View>
                 <Text style={styles.title}>Fresh Hands</Text>
-                <Text style={styles.tagline}>Reliable Maid Services</Text>
+                <Text style={styles.tagline}>Services at your fingertips</Text>
 
                 <View style={styles.loadingContainer}>
                     <View style={styles.dot} />

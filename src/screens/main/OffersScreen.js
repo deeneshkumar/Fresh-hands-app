@@ -12,7 +12,7 @@ export default function OffersScreen() {
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                 <Text style={styles.headerTitle}>Exclusive Offers</Text>
-                <Text style={styles.headerSub}>Handpicked deals just for you!</Text>
+                <Text style={styles.headerSub}>Savings on every service, every day. Handpicked deals just for you!</Text>
 
                 {OFFERS.map((offer) => (
                     <TouchableOpacity key={offer.id} activeOpacity={0.9} style={styles.offerCardWrapper}>

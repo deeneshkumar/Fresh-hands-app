@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { X, MapPin, Phone, User, Clock, CheckCircle } from 'lucide-react-native';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
+import LiveTrackingMap from '../../components/LiveTrackingMap';
 
 export default function OrderDetailsModal({ visible, onClose, order }) {
     if (!order) return null;
@@ -28,11 +29,12 @@ export default function OrderDetailsModal({ visible, onClose, order }) {
                             </View>
                         </View>
 
-                        {/* Map Placeholder */}
-                        <View style={styles.mapPlaceholder}>
-                            <MapPin color={COLORS.primary} size={40} />
-                            <Text style={styles.mapText}>Live Tracking Map</Text>
-                            <Text style={styles.mapSubText}>Partner is on the way</Text>
+                        {/* Live Tracking Map */}
+                        <View style={styles.mapContainer}>
+                            <LiveTrackingMap style={styles.map} />
+                            <View style={styles.mapOverlay}>
+                                <Text style={styles.mapStatusText}>{order.partner ? 'Partner is approaching' : 'Locating partner...'}</Text>
+                            </View>
                         </View>
 
                         {/* Partner Info */}
@@ -40,11 +42,19 @@ export default function OrderDetailsModal({ visible, onClose, order }) {
                             <Text style={styles.cardTitle}>Your Partner</Text>
                             <View style={styles.partnerRow}>
                                 <View style={styles.avatar}>
-                                    <User color={COLORS.white} size={24} />
+                                    {order.partner?.image ? (
+                                        <Image source={{ uri: order.partner.image }} style={styles.avatarImage} />
+                                    ) : (
+                                        <User color={COLORS.white} size={24} />
+                                    )}
                                 </View>
                                 <View style={styles.partnerInfo}>
-                                    <Text style={styles.partnerName}>{order.partner || 'Assigning...'}</Text>
-                                    <Text style={styles.partnerRating}>⭐ 4.8 (120 reviews)</Text>
+                                    <Text style={styles.partnerName}>
+                                        {typeof order.partner === 'object' ? order.partner?.name : (order.partner || 'Assigning...')}
+                                    </Text>
+                                    <Text style={styles.partnerRating}>
+                                        ⭐ {typeof order.partner === 'object' ? order.partner?.rating : '4.8'} (120 reviews)
+                                    </Text>
                                 </View>
                                 <TouchableOpacity style={styles.callButton}>
                                     <Phone color={COLORS.primary} size={20} />
@@ -57,7 +67,7 @@ export default function OrderDetailsModal({ visible, onClose, order }) {
                             <Text style={styles.cardTitle}>Order Summary</Text>
                             <View style={styles.row}>
                                 <Text style={styles.label}>Service</Text>
-                                <Text style={styles.value}>{order.serviceName}</Text>
+                                <Text style={styles.value}>{order.service?.name || order.serviceName}</Text>
                             </View>
                             <View style={styles.row}>
                                 <Text style={styles.label}>Date & Time</Text>
@@ -71,10 +81,33 @@ export default function OrderDetailsModal({ visible, onClose, order }) {
                                 <Text style={styles.label}>Payment</Text>
                                 <Text style={styles.value}>{order.paymentMethod?.toUpperCase() || 'CASH'}</Text>
                             </View>
-                            <View style={[styles.row, styles.totalRow]}>
-                                <Text style={styles.totalLabel}>Total</Text>
-                                <Text style={styles.totalValue}>₹{order.price}</Text>
-                            </View>
+
+                            {order.billDetails ? (
+                                <>
+                                    <View style={styles.divider} />
+                                    <View style={styles.row}>
+                                        <Text style={styles.label}>Item Total</Text>
+                                        <Text style={styles.value}>₹{order.billDetails.itemTotal}</Text>
+                                    </View>
+                                    <View style={styles.row}>
+                                        <Text style={styles.label}>Convenience Fee</Text>
+                                        <Text style={styles.value}>₹{order.billDetails.convenienceFee}</Text>
+                                    </View>
+                                    <View style={styles.row}>
+                                        <Text style={styles.label}>Taxes</Text>
+                                        <Text style={styles.value}>₹{order.billDetails.taxes}</Text>
+                                    </View>
+                                    <View style={[styles.row, styles.totalRow]}>
+                                        <Text style={styles.totalLabel}>Grand Total</Text>
+                                        <Text style={styles.totalValue}>₹{order.billDetails.grandTotal}</Text>
+                                    </View>
+                                </>
+                            ) : (
+                                <View style={[styles.row, styles.totalRow]}>
+                                    <Text style={styles.totalLabel}>Total</Text>
+                                    <Text style={styles.totalValue}>₹{order.price}</Text>
+                                </View>
+                            )}
                         </View>
                     </ScrollView>
                 </View>
@@ -131,25 +164,38 @@ const styles = StyleSheet.create({
         height: '100%',
         backgroundColor: COLORS.success,
     },
-    mapPlaceholder: {
-        height: 200,
-        backgroundColor: '#E3F2FD',
-        borderRadius: THEME.borderRadius.m,
-        justifyContent: 'center',
-        alignItems: 'center',
+    mapContainer: {
+        height: 220,
         marginBottom: THEME.spacing.l,
+        borderRadius: THEME.borderRadius.m,
+        overflow: 'hidden',
+        position: 'relative',
+        backgroundColor: COLORS.surface,
         borderWidth: 1,
-        borderColor: '#BBDEFB',
+        borderColor: COLORS.border,
     },
-    mapText: {
-        fontSize: 16,
+    map: {
+        flex: 1,
+    },
+    mapOverlay: {
+        position: 'absolute',
+        bottom: 12,
+        left: 12,
+        right: 12,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        padding: 10,
+        borderRadius: 8,
+        alignItems: 'center',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+    },
+    mapStatusText: {
+        fontSize: 14,
         fontWeight: 'bold',
-        color: COLORS.info,
-        marginTop: 8,
-    },
-    mapSubText: {
-        fontSize: 12,
-        color: COLORS.textLight,
+        color: COLORS.primary,
     },
     card: {
         backgroundColor: COLORS.surface,
@@ -175,6 +221,16 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: THEME.spacing.m,
+        overflow: 'hidden',
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: COLORS.border,
+        marginVertical: 8,
     },
     partnerInfo: {
         flex: 1,

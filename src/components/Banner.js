@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, ImageBackground } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../constants/colors';
 import { THEME } from '../constants/theme';
@@ -8,6 +9,7 @@ import { OFFERS } from '../constants/dummyData';
 const { width } = Dimensions.get('window');
 
 export default function Banner({ containerStyle }) {
+    const navigation = useNavigation();
     const [activeSlide, setActiveSlide] = useState(0);
     const scrollViewRef = useRef(null);
 
@@ -55,9 +57,9 @@ export default function Banner({ containerStyle }) {
                                 <View style={styles.content}>
                                     <Text style={styles.title}>{offer.title}</Text>
                                     <Text style={styles.subtitle}>{offer.subtitle}</Text>
-                                    <View style={styles.button}>
+                                    <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Offers')}>
                                         <Text style={styles.buttonText}>Claim Now</Text>
-                                    </View>
+                                    </TouchableOpacity>
                                 </View>
                             </LinearGradient>
                         </ImageBackground>

@@ -10,9 +10,17 @@ import Banner from '../../components/Banner';
 import Input from '../../components/Input';
 import ServiceCard from '../../components/ServiceCard';
 
-export default function FreshHandsScreen({ navigation }) {
+export default function FreshHandsScreen({ navigation, route }) {
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('all');
+    // Initialize with param if available, else 'all'
+    const [selectedCategory, setSelectedCategory] = useState(route.params?.categoryId || 'all');
+
+    // Update state if param changes (e.g., coming from Home again with different category)
+    React.useEffect(() => {
+        if (route.params?.categoryId) {
+            setSelectedCategory(route.params.categoryId);
+        }
+    }, [route.params?.categoryId]);
 
     const filteredServices = SERVICES.filter(service => {
         const matchesSearch = service.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -33,15 +41,9 @@ export default function FreshHandsScreen({ navigation }) {
                 <View style={styles.heroContainer}>
                     <Text style={styles.heroTitle}>Fresh Hands Services</Text>
                     <Text style={styles.heroSubtitle}>Professional help for your home needs</Text>
-                </View>
-
-                {/* Banner */}
-                <Banner containerStyle={{ marginBottom: 12 }} />
-
-                {/* Slogan 1 */}
-                <View style={styles.sloganContainer}>
-                    <Sparkles color={COLORS.secondary} size={16} style={{ marginRight: 8 }} />
-                    <Text style={styles.sloganText}>Verified Professionals, Guaranteed Quality</Text>
+                    <View style={styles.taglineContainer}>
+                        <Text style={styles.taglineText}>Expertise you can trust, right at your doorstep.</Text>
+                    </View>
                 </View>
 
                 {/* Search Bar */}
@@ -54,6 +56,16 @@ export default function FreshHandsScreen({ navigation }) {
                         style={styles.searchInput}
                     />
                 </View>
+
+                {/* Banner */}
+                <Banner containerStyle={{ marginBottom: 12 }} />
+
+                {/* Slogan 1 */}
+                <View style={styles.sloganContainer}>
+                    <Sparkles color={COLORS.secondary} size={16} style={{ marginRight: 8 }} />
+                    <Text style={styles.sloganText}>Verified Professionals, Guaranteed Quality</Text>
+                </View>
+
 
                 {/* Category Filter */}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryList}>
@@ -123,7 +135,7 @@ const styles = StyleSheet.create({
     },
     heroContainer: {
         marginBottom: THEME.spacing.m,
-        alignItems: 'center',
+        alignItems: 'flex-start',
     },
     heroTitle: {
         fontSize: 24,
@@ -134,6 +146,22 @@ const styles = StyleSheet.create({
     heroSubtitle: {
         fontSize: 14,
         color: COLORS.textLight,
+        marginBottom: 8,
+    },
+    taglineContainer: {
+        backgroundColor: COLORS.white,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        elevation: 1,
+    },
+    taglineText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: COLORS.primary,
+        fontStyle: 'italic',
     },
     sloganContainer: {
         marginBottom: THEME.spacing.m,

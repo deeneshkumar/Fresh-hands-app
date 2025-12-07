@@ -7,6 +7,7 @@ import FreshHandsScreen from '../screens/main/FreshHandsScreen';
 import ExploreScreen from '../screens/main/ExploreScreen';
 import PartnerScreen from '../screens/main/PartnerScreen';
 import OffersScreen from '../screens/main/OffersScreen';
+import FloatingChatButton from '../components/FloatingChatButton';
 import { COLORS } from '../constants/colors';
 
 const Tab = createBottomTabNavigator();
@@ -66,6 +67,9 @@ export default function MainTabNavigator() {
                     }}
                 />
             </Tab.Navigator>
+
+            {/* Floating Chat Button Overlay */}
+            <FloatingChatButton />
         </View>
     );
 }

@@ -14,10 +14,9 @@ export default function OrderConfirmationScreen({ navigation, route }) {
     const serviceName = route.params?.service?.name || 'Service';
 
     useEffect(() => {
-        createOrder({
-            id: Math.random().toString(),
-            serviceName: serviceName,
-        });
+        if (route.params?.orderDetails) {
+            createOrder(route.params.orderDetails);
+        }
     }, []);
 
     return (
