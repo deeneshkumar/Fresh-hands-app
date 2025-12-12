@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, FlatList, Dimensions, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, FlatList, Dimensions, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronDown, Check } from 'lucide-react-native';
+import { ChevronDown, Check, ArrowLeft } from 'lucide-react-native';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import { COLORS } from '../../constants/colors';
@@ -53,47 +53,52 @@ export default function LoginScreen({ navigation }) {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.content}>
-                <View style={styles.header}>
-                    <Text style={styles.logoText}>Fresh Hands</Text>
-                    <Text style={styles.tagline}>Home services at your fingertips</Text>
-                </View>
-
-                <View style={styles.form}>
-                    <Text style={styles.label}>Enter your mobile number</Text>
-
-                    <View style={styles.inputRow}>
-                        {/* Country Code Selector */}
-                        <TouchableOpacity
-                            style={styles.countryCodeContainer}
-                            onPress={() => setShowCountryPicker(true)}
-                        >
-                            <Image
-                                source={{ uri: selectedCountry.flag }}
-                                style={styles.flagSmall}
-                            />
-                            <Text style={styles.countryCodeText}>{selectedCountry.dial_code}</Text>
-                            <ChevronDown size={14} color={COLORS.text} />
-                        </TouchableOpacity>
-
-                        {/* Mobile Number Input */}
-                        <View style={styles.phoneInputContainer}>
-                            <Input
-                                placeholder="Mobile Number"
-                                keyboardType="phone-pad"
-                                value={phoneNumber}
-                                onChangeText={setPhoneNumber}
-                                maxLength={10}
-                                style={styles.inputReset} // Override container styles
-                            />
-                        </View>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={{ flex: 1 }}
+            >
+                <View style={styles.content}>
+                    <View style={styles.header}>
+                        <Text style={styles.logoText}>Fresh Hands</Text>
+                        <Text style={styles.tagline}>Home services at your fingertips</Text>
                     </View>
 
-                    <Text style={styles.helperText}>We will send you a 4 digit OTP to verify</Text>
+                    <View style={styles.form}>
+                        <Text style={styles.label}>Enter your mobile number</Text>
 
-                    <Button title="Continue" onPress={handleLogin} style={styles.button} />
+                        <View style={styles.inputRow}>
+                            {/* Country Code Selector */}
+                            <TouchableOpacity
+                                style={styles.countryCodeContainer}
+                                onPress={() => setShowCountryPicker(true)}
+                            >
+                                <Image
+                                    source={{ uri: selectedCountry.flag }}
+                                    style={styles.flagSmall}
+                                />
+                                <Text style={styles.countryCodeText}>{selectedCountry.dial_code}</Text>
+                                <ChevronDown size={14} color={COLORS.text} />
+                            </TouchableOpacity>
+
+                            {/* Mobile Number Input */}
+                            <View style={styles.phoneInputContainer}>
+                                <Input
+                                    placeholder="Mobile Number"
+                                    keyboardType="phone-pad"
+                                    value={phoneNumber}
+                                    onChangeText={setPhoneNumber}
+                                    maxLength={10}
+                                    style={styles.inputReset} // Override container styles
+                                />
+                            </View>
+                        </View>
+
+                        <Text style={styles.helperText}>We will send you a 4 digit OTP to verify</Text>
+
+                        <Button title="Continue" onPress={handleLogin} style={styles.button} />
+                    </View>
                 </View>
-            </View>
+            </KeyboardAvoidingView>
 
             {/* Country Picker Modal */}
             <Modal
@@ -140,6 +145,22 @@ const styles = StyleSheet.create({
     header: {
         alignItems: 'center',
         marginBottom: THEME.spacing.xl * 2,
+        position: 'relative', // Relative for absolute positioning of back button if we want, or flex.
+        // Actually, let's keep it simple. If we want the back button top-left separate from centered logo,
+        // we might need a different structure or absolute positioning.
+        // Given current structure: Header contains Logo and Tagline centered. 
+        // Adding BackButton inside Header might mess up centering if just flex.
+    },
+    backButton: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     logoText: {
         fontSize: 36,

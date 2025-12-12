@@ -31,8 +31,28 @@ export const AuthProvider = ({ children }) => {
         setUser(prevUser => ({ ...prevUser, ...updatedData }));
     };
 
+    const addToWallet = (amount) => {
+        setUser(prevUser => ({
+            ...prevUser,
+            walletBalance: (prevUser?.walletBalance || 0) + parseFloat(amount)
+        }));
+    };
+
+    const deductFromWallet = (amount) => {
+        if (!user || (user.walletBalance || 0) < amount) return false;
+        setUser(prevUser => ({
+            ...prevUser,
+            walletBalance: (prevUser?.walletBalance || 0) - parseFloat(amount)
+        }));
+        return true;
+    };
+
+    const joinClub = () => {
+        setUser(prevUser => ({ ...prevUser, isClubMember: true }));
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, logout, location, updateLocation, updateUserProfile }}>
+        <AuthContext.Provider value={{ user, isLoading, login, logout, location, updateLocation, updateUserProfile, addToWallet, deductFromWallet, joinClub }}>
             {children}
         </AuthContext.Provider>
     );

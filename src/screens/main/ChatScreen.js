@@ -126,6 +126,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
+        paddingTop: Platform.OS === 'android' ? 30 : 0,
     },
     header: {
         flexDirection: 'row',
@@ -142,7 +143,12 @@ const styles = StyleSheet.create({
         zIndex: 10,
     },
     backButton: {
-        padding: 4,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     headerInfo: {
         flex: 1,

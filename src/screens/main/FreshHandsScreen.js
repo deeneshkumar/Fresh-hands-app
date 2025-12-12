@@ -29,89 +29,92 @@ export default function FreshHandsScreen({ navigation, route }) {
     });
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Background Theme */}
-                <LinearGradient
-                    colors={[COLORS.primary + '15', 'transparent']}
-                    style={styles.backgroundTheme}
-                />
+        <View style={styles.container}>
+            {/* Background Theme */}
+            <LinearGradient
+                colors={['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 1)', 'transparent']}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={styles.backgroundTheme}
+            />
+            <SafeAreaView style={styles.safeArea}>
+                <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-                {/* Hero Header */}
-                <View style={styles.heroContainer}>
-                    <Text style={styles.heroTitle}>Fresh Hands Services</Text>
-                    <Text style={styles.heroSubtitle}>Professional help for your home needs</Text>
-                    <View style={styles.taglineContainer}>
-                        <Text style={styles.taglineText}>Expertise you can trust, right at your doorstep.</Text>
-                    </View>
-                </View>
-
-                {/* Search Bar */}
-                <View style={styles.searchContainer}>
-                    <Search color={COLORS.textLight} size={20} style={styles.searchIcon} />
-                    <Input
-                        placeholder="Search all services..."
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        style={styles.searchInput}
-                    />
-                </View>
-
-                {/* Banner */}
-                <Banner containerStyle={{ marginBottom: 12 }} />
-
-                {/* Slogan 1 */}
-                <View style={styles.sloganContainer}>
-                    <Sparkles color={COLORS.secondary} size={16} style={{ marginRight: 8 }} />
-                    <Text style={styles.sloganText}>Verified Professionals, Guaranteed Quality</Text>
-                </View>
-
-
-                {/* Category Filter */}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryList}>
-                    <TouchableOpacity
-                        style={[styles.categoryChip, selectedCategory === 'all' && styles.activeCategoryChip]}
-                        onPress={() => setSelectedCategory('all')}
-                    >
-                        <Text style={[styles.categoryText, selectedCategory === 'all' && styles.activeCategoryText]}>All</Text>
-                    </TouchableOpacity>
-                    {CATEGORIES.map((cat) => (
-                        <TouchableOpacity
-                            key={cat.id}
-                            style={[styles.categoryChip, selectedCategory === cat.id && styles.activeCategoryChip]}
-                            onPress={() => setSelectedCategory(cat.id)}
-                        >
-                            <Text style={[styles.categoryText, selectedCategory === cat.id && styles.activeCategoryText]}>{cat.name}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-
-                {/* Slogan 2 */}
-                <View style={styles.sloganContainer}>
-                    <Text style={styles.sloganTextSecondary}>Choose from our wide range of services</Text>
-                </View>
-
-                {/* Services List */}
-                <Text style={styles.sectionTitle}>
-                    {selectedCategory === 'all' ? 'All Services' : CATEGORIES.find(c => c.id === selectedCategory)?.name}
-                </Text>
-
-                <View style={styles.servicesGrid}>
-                    {filteredServices.map((service) => (
-                        <View key={service.id} style={styles.serviceWrapper}>
-                            <ServiceCard
-                                service={service}
-                                onPress={() => navigation.navigate('ServiceDetail', { service })}
-                            />
+                    {/* Hero Header */}
+                    <View style={styles.heroContainer}>
+                        <Text style={styles.heroTitle}>Fresh Hands Services</Text>
+                        <View style={styles.taglineContainer}>
+                            <Text style={styles.taglineText}>Expertise you can trust, right at your doorstep.</Text>
                         </View>
-                    ))}
-                </View>
+                    </View>
 
-                {filteredServices.length === 0 && (
-                    <Text style={styles.emptyText}>No services found matching your search.</Text>
-                )}
-            </ScrollView>
-        </SafeAreaView>
+                    {/* Search Bar */}
+                    <View style={styles.searchContainer}>
+                        <Search color={COLORS.textLight} size={20} style={styles.searchIcon} />
+                        <Input
+                            placeholder="Search all services..."
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            style={styles.searchInput}
+                        />
+                    </View>
+
+                    {/* Banner */}
+
+
+                    {/* Slogan 1 */}
+                    <View style={styles.sloganContainer}>
+                        <Sparkles color={COLORS.secondary} size={16} style={{ marginRight: 8 }} />
+                        <Text style={styles.sloganText}>Verified Professionals, Guaranteed Quality</Text>
+                    </View>
+
+
+                    {/* Category Filter */}
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryList}>
+                        <TouchableOpacity
+                            style={[styles.categoryChip, selectedCategory === 'all' && styles.activeCategoryChip]}
+                            onPress={() => setSelectedCategory('all')}
+                        >
+                            <Text style={[styles.categoryText, selectedCategory === 'all' && styles.activeCategoryText]}>All</Text>
+                        </TouchableOpacity>
+                        {CATEGORIES.map((cat) => (
+                            <TouchableOpacity
+                                key={cat.id}
+                                style={[styles.categoryChip, selectedCategory === cat.id && styles.activeCategoryChip]}
+                                onPress={() => setSelectedCategory(cat.id)}
+                            >
+                                <Text style={[styles.categoryText, selectedCategory === cat.id && styles.activeCategoryText]}>{cat.name}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+
+                    {/* Slogan 2 */}
+                    <View style={styles.sloganContainer}>
+                        <Text style={styles.sloganTextSecondary}>Choose from our wide range of services</Text>
+                    </View>
+
+                    {/* Services List */}
+                    <Text style={styles.sectionTitle}>
+                        {selectedCategory === 'all' ? 'All Services' : CATEGORIES.find(c => c.id === selectedCategory)?.name}
+                    </Text>
+
+                    <View style={styles.servicesGrid}>
+                        {filteredServices.map((service) => (
+                            <View key={service.id} style={styles.serviceWrapper}>
+                                <ServiceCard
+                                    service={service}
+                                    onPress={() => navigation.navigate('ServiceDetail', { service })}
+                                />
+                            </View>
+                        ))}
+                    </View>
+
+                    {filteredServices.length === 0 && (
+                        <Text style={styles.emptyText}>No services found matching your search.</Text>
+                    )}
+                </ScrollView>
+            </SafeAreaView>
+        </View>
     );
 }
 
@@ -119,6 +122,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
+    },
+    safeArea: {
+        flex: 1,
     },
     backgroundTheme: {
         position: 'absolute',
@@ -138,7 +144,7 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
     },
     heroTitle: {
-        fontSize: 24,
+        fontSize: 20,
         fontWeight: 'bold',
         color: COLORS.text,
         marginBottom: 4,
@@ -185,8 +191,10 @@ const styles = StyleSheet.create({
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 1,
+        borderRadius: 10,
         position: 'relative',
+        marginHorizontal: 4,
     },
     searchIcon: {
         position: 'absolute',
@@ -197,8 +205,15 @@ const styles = StyleSheet.create({
     searchInput: {
         paddingLeft: 40,
         backgroundColor: COLORS.white,
-        elevation: 2,
-        borderRadius: THEME.borderRadius.m,
+        elevation: 4,
+        borderRadius: 10,
+        shadowColor: "#000000ff",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3.84,
     },
     categoryList: {
         marginBottom: THEME.spacing.s,

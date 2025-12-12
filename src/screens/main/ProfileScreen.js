@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, ShoppingBag, Tag, Gift, Settings, MessageCircle, Phone, LogOut, ChevronRight, Wallet, Moon } from 'lucide-react-native';
+import { User, ShoppingBag, Tag, Gift, Settings, MessageCircle, Phone, LogOut, ChevronRight, Wallet, Moon, ArrowLeft, Crown } from 'lucide-react-native';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
@@ -14,6 +14,7 @@ export default function ProfileScreen({ navigation }) {
         { icon: ShoppingBag, label: 'My Orders', onPress: () => navigation.navigate('Orders') },
         { icon: Tag, label: 'My Vouchers', onPress: () => navigation.navigate('Vouchers') },
         { icon: Gift, label: 'Rewards', onPress: () => navigation.navigate('Rewards') },
+        { icon: Crown, label: 'Fresh Hands Club', onPress: () => navigation.navigate('Subscription') }, // Added Club Section
         { icon: Settings, label: 'Settings', onPress: () => navigation.navigate('Settings') },
         { icon: MessageCircle, label: 'Chat With Us', onPress: () => navigation.navigate('Chat') },
         { icon: Phone, label: 'Contact Us', onPress: () => navigation.navigate('Support') },
@@ -31,6 +32,9 @@ export default function ProfileScreen({ navigation }) {
             <ScrollView contentContainerStyle={styles.content}>
                 {/* Header */}
                 <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <ArrowLeft color={COLORS.text} size={24} />
+                    </TouchableOpacity>
                     <View style={styles.avatar}>
                         <User color={COLORS.white} size={40} />
                     </View>
@@ -44,19 +48,19 @@ export default function ProfileScreen({ navigation }) {
                 </View>
 
                 {/* Wallet Section */}
-                <View style={styles.walletCard}>
+                <TouchableOpacity style={styles.walletCard} onPress={() => navigation.navigate('Wallet')}>
                     <View style={styles.walletHeader}>
                         <View style={styles.walletTitleRow}>
                             <Wallet color={COLORS.white} size={24} />
                             <Text style={styles.walletTitle}>Fresh Wallet</Text>
                         </View>
-                        <Text style={styles.walletBalance}>₹ 250.00</Text>
+                        <Text style={styles.walletBalance}>₹ {(user?.walletBalance || 0).toFixed(2)}</Text>
                     </View>
                     <Text style={styles.walletSub}>Available Balance</Text>
-                    <TouchableOpacity style={styles.addMoneyButton}>
+                    <TouchableOpacity style={styles.addMoneyButton} onPress={() => navigation.navigate('AddMoney')}>
                         <Text style={styles.addMoneyText}>+ Add Money</Text>
                     </TouchableOpacity>
-                </View>
+                </TouchableOpacity>
 
                 {/* Menu */}
                 <View style={styles.menu}>
@@ -94,6 +98,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: THEME.spacing.l,
+    },
+    backButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: THEME.spacing.m, // Added margin right to space it from avatar
     },
     avatar: {
         width: 70,

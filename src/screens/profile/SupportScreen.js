@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MessageCircle, Phone, Mail, HelpCircle } from 'lucide-react-native';
+import { MessageCircle, Phone, Mail, HelpCircle, ArrowLeft } from 'lucide-react-native';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 
@@ -23,6 +23,14 @@ export default function SupportScreen({ navigation }) {
 
     return (
         <SafeAreaView style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <ArrowLeft color={COLORS.text} size={24} />
+                </TouchableOpacity>
+                <View style={{ flex: 1 }}>
+                    {/* Empty container to help layout if needed, or just let title flow */}
+                </View>
+            </View>
             <View style={styles.content}>
                 <Text style={styles.headerTitle}>Help & Support</Text>
                 <Text style={styles.headerSub}>How can we help you today?</Text>
@@ -60,6 +68,21 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: THEME.spacing.m,
+        paddingTop: THEME.spacing.m,
+    },
+    backButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
     },
     content: {
         padding: THEME.spacing.m,

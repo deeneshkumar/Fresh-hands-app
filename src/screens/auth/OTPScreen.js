@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ArrowLeft } from 'lucide-react-native';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import { COLORS } from '../../constants/colors';
@@ -49,6 +50,9 @@ export default function OTPScreen({ navigation, route }) {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.content}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <ArrowLeft color={COLORS.text} size={24} />
+                </TouchableOpacity>
                 <Text style={styles.title}>Verify Phone Number</Text>
                 <Text style={styles.subtitle}>
                     Enter the 4-digit code sent to {phoneNumber}
@@ -90,6 +94,15 @@ const styles = StyleSheet.create({
     content: {
         padding: THEME.spacing.l,
         flex: 1,
+    },
+    backButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: THEME.spacing.l,
     },
     title: {
         fontSize: 28,

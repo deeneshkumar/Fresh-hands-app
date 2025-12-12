@@ -1,152 +1,77 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList, TextInput, Alert, ScrollView } from 'react-native';
-import { MapPin, X, Plus, Home, Briefcase, Navigation } from 'lucide-react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import { MapPin, X, Plus } from 'lucide-react-native';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 import Button from '../../components/Button';
-import Input from '../../components/Input';
 
-export default function AddressModal({ visible, onClose, onSelectLocation, currentAddress }) {
-    const [view, setView] = useState('list'); // 'list' or 'add'
-    const [savedAddresses, setSavedAddresses] = useState([
-        { id: '1', type: 'Home', address: '12-A, Green Park Avenue, Chennai', city: 'Chennai' },
-        { id: '2', type: 'Work', address: 'Tech Park, OMR, Chennai', city: 'Chennai' },
-    ]);
+// Mock Saved Addresses
+const SAVED_ADDRESSES = [
+    { id: '1', type: 'Home', address: 'Flat 402, Sunshine Apartments, Anna Nagar, Chennai' },
+    { id: '2', type: 'Work', address: 'Tech Park, OMR, Chennai' },
+    { id: '3', type: 'Other', address: '12, Gandhi Street, T. Nagar, Chennai' }
+];
 
-    // Form State
-    const [newType, setNewType] = useState('Home');
-    const [newAddress, setNewAddress] = useState('');
-    const [newCity, setNewCity] = useState('');
+export default function AddressModal({ visible, onClose, onSelectLocation }) {
+    const [selectedId, setSelectedId] = useState(null);
 
-    const handleUseCurrentLocation = () => {
-        // Simulate GPS fetch
-        const gpsLocation = {
-            city: 'Anna Nagar, Chennai',
-            address: 'GPS Location: 4th Avenue, Anna Nagar'
-        };
-        onSelectLocation(gpsLocation);
-        onClose();
-    };
-
-    const handleSelectAddress = (addr) => {
-        onSelectLocation(addr);
-        onClose();
-    };
-
-    const handleSaveAddress = () => {
-        if (!newAddress || !newCity) {
-            Alert.alert('Error', 'Please enter address and city');
-            return;
+    const handleConfirm = () => {
+        if (selectedId) {
+            const addr = SAVED_ADDRESSES.find(a => a.id === selectedId);
+            onSelectLocation(addr);
+            onClose();
         }
-        const newAddrObj = {
-            id: Date.now().toString(),
-            type: newType,
-            address: newAddress,
-            city: newCity
-        };
-        setSavedAddresses(prev => [...prev, newAddrObj]);
-        setView('list');
-        setNewAddress('');
-        setNewCity('');
     };
-
-    const renderHeader = () => (
-        <View style={styles.header}>
-            <Text style={styles.headerTitle}>
-                {view === 'list' ? 'Select Location' : 'Add New Address'}
-            </Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <X color={COLORS.text} size={24} />
-            </TouchableOpacity>
-        </View>
-    );
-
-    const renderList = () => (
-        <>
-            <TouchableOpacity style={styles.currentLocationBtn} onPress={handleUseCurrentLocation}>
-                <Navigation color={COLORS.primary} size={20} fill={COLORS.primary + '20'} />
-                <View style={styles.btnTextContainer}>
-                    <Text style={styles.btnTitle}>Use Current Location</Text>
-                    <Text style={styles.btnSubtitle}>Using GPS</Text>
-                </View>
-            </TouchableOpacity>
-
-            <Text style={styles.sectionTitle}>Saved Addresses</Text>
-
-            <FlatList
-                data={savedAddresses}
-                keyExtractor={item => item.id}
-                renderItem={({ item }) => (
-                    <TouchableOpacity
-                        style={[
-                            styles.addressCard,
-                            currentAddress === item.address && styles.activeAddressCard
-                        ]}
-                        onPress={() => handleSelectAddress(item)}
-                    >
-                        <View style={styles.addressIcon}>
-                            {item.type === 'Home' ? <Home size={20} color={COLORS.text} /> : <Briefcase size={20} color={COLORS.text} />}
-                        </View>
-                        <View style={styles.addressInfo}>
-                            <Text style={styles.addressType}>{item.type}</Text>
-                            <Text style={styles.addressText}>{item.address}</Text>
-                        </View>
-                        {currentAddress === item.address && <MapPin size={16} color={COLORS.primary} />}
-                    </TouchableOpacity>
-                )}
-                contentContainerStyle={styles.listContent}
-            />
-
-            <TouchableOpacity style={styles.addNewBtn} onPress={() => setView('add')}>
-                <Plus color={COLORS.primary} size={20} />
-                <Text style={styles.addNewText}>Add New Address</Text>
-            </TouchableOpacity>
-        </>
-    );
-
-    const renderAddForm = () => (
-        <ScrollView style={styles.formContainer}>
-            <Text style={styles.label}>Label</Text>
-            <View style={styles.typeSelector}>
-                {['Home', 'Work', 'Other'].map(type => (
-                    <TouchableOpacity
-                        key={type}
-                        style={[styles.typeChip, newType === type && styles.activeTypeChip]}
-                        onPress={() => setNewType(type)}
-                    >
-                        <Text style={[styles.typeText, newType === type && styles.activeTypeText]}>{type}</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            <Input
-                placeholder="House / Flat / Block No."
-                value={newAddress}
-                onChangeText={setNewAddress}
-                style={styles.input}
-            />
-            <Input
-                placeholder="City / Area"
-                value={newCity}
-                onChangeText={setNewCity}
-                style={styles.input}
-            />
-
-            <View style={styles.formActions}>
-                <Button title="Save Address" onPress={handleSaveAddress} style={styles.saveBtn} />
-                <TouchableOpacity onPress={() => setView('list')} style={styles.cancelBtn}>
-                    <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
-    );
 
     return (
-        <Modal visible={visible} animationType="slide" transparent>
+        <Modal
+            visible={visible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={onClose}
+        >
             <View style={styles.overlay}>
                 <View style={styles.modalContainer}>
-                    {renderHeader()}
-                    {view === 'list' ? renderList() : renderAddForm()}
+                    <View style={styles.header}>
+                        <Text style={styles.title}>Select Address</Text>
+                        <TouchableOpacity onPress={onClose}>
+                            <X color={COLORS.text} size={24} />
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView contentContainerStyle={styles.content}>
+                        <TouchableOpacity style={styles.addNewButton}>
+                            <Plus color={COLORS.primary} size={20} />
+                            <Text style={styles.addNewText}>Add New Address</Text>
+                        </TouchableOpacity>
+
+                        {SAVED_ADDRESSES.map((item) => (
+                            <TouchableOpacity
+                                key={item.id}
+                                style={[
+                                    styles.addressCard,
+                                    selectedId === item.id && styles.addressCardActive
+                                ]}
+                                onPress={() => setSelectedId(item.id)}
+                            >
+                                <View style={[styles.iconBox, selectedId === item.id && styles.iconBoxActive]}>
+                                    <MapPin color={selectedId === item.id ? COLORS.white : COLORS.textLight} size={20} />
+                                </View>
+                                <View style={styles.addressInfo}>
+                                    <Text style={styles.addressType}>{item.type}</Text>
+                                    <Text style={styles.addressText}>{item.address}</Text>
+                                </View>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+
+                    <View style={styles.footer}>
+                        <Button
+                            title="Confirm Location"
+                            onPress={handleConfirm}
+                            disabled={!selectedId}
+                        />
+                    </View>
                 </View>
             </View>
         </Modal>
@@ -161,9 +86,9 @@ const styles = StyleSheet.create({
     },
     modalContainer: {
         backgroundColor: COLORS.background,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        height: '70%',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        height: '60%',
         padding: THEME.spacing.m,
     },
     header: {
@@ -171,64 +96,57 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: THEME.spacing.l,
-        paddingBottom: THEME.spacing.s,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
     },
-    headerTitle: {
+    title: {
         fontSize: 18,
         fontWeight: 'bold',
         color: COLORS.text,
     },
-    closeButton: {
-        padding: 4,
+    content: {
+        paddingBottom: 80,
     },
-    currentLocationBtn: {
+    addNewButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: THEME.spacing.m,
-        backgroundColor: COLORS.primary + '10',
+        padding: 16,
+        borderWidth: 1,
+        borderColor: COLORS.primary,
+        borderStyle: 'dashed',
         borderRadius: THEME.borderRadius.m,
-        marginBottom: THEME.spacing.l,
+        justifyContent: 'center',
+        marginBottom: 16,
+        backgroundColor: '#F0F9FF',
     },
-    btnTextContainer: {
-        marginLeft: THEME.spacing.m,
-    },
-    btnTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
+    addNewText: {
         color: COLORS.primary,
-    },
-    btnSubtitle: {
-        fontSize: 12,
-        color: COLORS.textLight,
-    },
-    sectionTitle: {
-        fontSize: 14,
         fontWeight: 'bold',
-        color: COLORS.textLight,
-        marginBottom: THEME.spacing.m,
-        textTransform: 'uppercase',
-    },
-    listContent: {
-        paddingBottom: 80,
+        marginLeft: 8,
     },
     addressCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: THEME.spacing.m,
-        backgroundColor: COLORS.surface,
+        padding: 16,
         borderRadius: THEME.borderRadius.m,
-        marginBottom: THEME.spacing.m,
+        backgroundColor: COLORS.white,
         borderWidth: 1,
         borderColor: COLORS.border,
+        marginBottom: 12,
     },
-    activeAddressCard: {
+    addressCardActive: {
         borderColor: COLORS.primary,
-        backgroundColor: COLORS.primary + '05',
+        backgroundColor: '#FFF',
     },
-    addressIcon: {
-        marginRight: THEME.spacing.m,
+    iconBox: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    iconBoxActive: {
+        backgroundColor: COLORS.primary,
     },
     addressInfo: {
         flex: 1,
@@ -237,77 +155,21 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: 'bold',
         color: COLORS.text,
-        marginBottom: 2,
+        marginBottom: 4,
     },
     addressText: {
         fontSize: 12,
         color: COLORS.textLight,
+        lineHeight: 16,
     },
-    addNewBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
+    footer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         padding: THEME.spacing.m,
-        borderWidth: 1,
-        borderColor: COLORS.primary,
-        borderStyle: 'dashed',
-        borderRadius: THEME.borderRadius.m,
-        marginTop: 'auto',
-    },
-    addNewText: {
-        marginLeft: 8,
-        color: COLORS.primary,
-        fontWeight: 'bold',
-    },
-    // Form Styles
-    formContainer: {
-        flex: 1,
-    },
-    label: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        marginBottom: 8,
-        color: COLORS.text,
-    },
-    typeSelector: {
-        flexDirection: 'row',
-        marginBottom: THEME.spacing.l,
-        gap: 8,
-    },
-    typeChip: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        backgroundColor: COLORS.surface,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-    },
-    activeTypeChip: {
-        backgroundColor: COLORS.primary,
-        borderColor: COLORS.primary,
-    },
-    typeText: {
-        color: COLORS.text,
-        fontWeight: '500',
-    },
-    activeTypeText: {
-        color: COLORS.white,
-    },
-    input: {
-        marginBottom: THEME.spacing.m,
-    },
-    formActions: {
-        marginTop: THEME.spacing.xl,
-    },
-    saveBtn: {
-        marginBottom: THEME.spacing.m,
-    },
-    cancelBtn: {
-        alignItems: 'center',
-        padding: 12,
-    },
-    cancelText: {
-        color: COLORS.textLight,
-        fontWeight: 'bold',
+        backgroundColor: COLORS.background,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
     },
 });

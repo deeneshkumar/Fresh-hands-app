@@ -1,81 +1,227 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, ImageBackground, Animated, Easing } from 'react-native';
-import { MapPin, Navigation } from 'lucide-react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, StyleSheet, Text, Platform } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { COLORS } from '../constants/colors';
 import { THEME } from '../constants/theme';
+import { PersonStanding, MapPin } from 'lucide-react-native';
 
-const MAP_IMAGE = 'https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1000&auto=format&fit=crop'; // Urban map view
+const USER_LOCATION = {
+    latitude: 12.9716,
+    longitude: 77.5946,
+    latitudeDelta: 0.02, // Zoomed in a bit more
+    longitudeDelta: 0.02,
+};
 
-export default function LiveTrackingMap({ style }) {
-    const driverPosition = useRef(new Animated.ValueXY({ x: 30, y: 30 })).current;
+const DRIVER_START = {
+    latitude: 12.9616, // Closer start for demo
+    longitude: 77.5846,
+};
 
-    // Rotate the driver icon based on movement direction (mocked)
-    const rotation = driverPosition.x.interpolate({
-        inputRange: [30, 250, 280],
-        outputRange: ['45deg', '135deg', '45deg']
-    });
+// Bright/Clean Map Style (White/Grey/Black)
+const customMapStyle = [
+    {
+        "elementType": "geometry",
+        "stylers": [{ "color": "#f5f5f5" }] // Light grey background
+    },
+    {
+        "elementType": "labels.icon",
+        "stylers": [{ "visibility": "off" }] // Hide icons
+    },
+    {
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#616161" }]
+    },
+    {
+        "elementType": "labels.text.stroke",
+        "stylers": [{ "color": "#f5f5f5" }]
+    },
+    {
+        "featureType": "administrative.land_parcel",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#bdbdbd" }]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#eeeeee" }]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#757575" }]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#e5e5e5" }]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#9e9e9e" }]
+    },
+    {
+        "featureType": "road",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#ffffff" }] // White roads
+    },
+    {
+        "featureType": "road.arterial",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#757575" }]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#dadada" }]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#616161" }]
+    },
+    {
+        "featureType": "road.local",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#9e9e9e" }]
+    },
+    {
+        "featureType": "transit.line",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#e5e5e5" }]
+    },
+    {
+        "featureType": "transit.station",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#eeeeee" }]
+    },
+    {
+        "featureType": "water",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#c9c9c9" }] // Greyscale water
+    },
+    {
+        "featureType": "water",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#9e9e9e" }]
+    }
+];
+
+// Calculate distance between two coords in km
+const getDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+};
+
+const deg2rad = (deg) => deg * (Math.PI / 180);
+
+export default function LiveTrackingMap({ style, onArrived }) {
+    const mapRef = useRef(null);
+    const [driverLocation, setDriverLocation] = useState(DRIVER_START);
+    const [eta, setEta] = useState(10);
+    const [distance, setDistance] = useState(2.0);
+    const hasArrived = useRef(false);
 
     useEffect(() => {
-        const animateDriver = () => {
-            Animated.loop(
-                Animated.sequence([
-                    // Move right
-                    Animated.timing(driverPosition, {
-                        toValue: { x: 250, y: 60 },
-                        duration: 6000,
-                        useNativeDriver: true,
-                        easing: Easing.inOut(Easing.quad)
-                    }),
-                    // Move down-left
-                    Animated.timing(driverPosition, {
-                        toValue: { x: 100, y: 150 },
-                        duration: 5000,
-                        useNativeDriver: true,
-                        easing: Easing.inOut(Easing.quad)
-                    }),
-                    // Move back to start
-                    Animated.timing(driverPosition, {
-                        toValue: { x: 30, y: 30 },
-                        duration: 5000,
-                        useNativeDriver: true,
-                        easing: Easing.inOut(Easing.quad)
-                    })
-                ])
-            ).start();
-        };
+        const interval = setInterval(() => {
+            if (hasArrived.current) {
+                clearInterval(interval);
+                return;
+            }
 
-        animateDriver();
+            setDriverLocation(prev => {
+                const latDiff = USER_LOCATION.latitude - prev.latitude;
+                const lonDiff = USER_LOCATION.longitude - prev.longitude;
+
+                // Check arrival (within ~50m)
+                if (Math.abs(latDiff) < 0.0005 && Math.abs(lonDiff) < 0.0005) {
+                    hasArrived.current = true;
+                    if (onArrived) onArrived();
+                    return USER_LOCATION; // Snap to user
+                }
+
+                const newLat = prev.latitude + latDiff * 0.03; // Slightly faster
+                const newLon = prev.longitude + lonDiff * 0.03;
+
+                const dist = getDistance(newLat, newLon, USER_LOCATION.latitude, USER_LOCATION.longitude);
+                setDistance(dist.toFixed(1));
+                setEta(Math.ceil(dist * 5));
+
+                return { latitude: newLat, longitude: newLon };
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    // Fit to markers on mount
+    useEffect(() => {
+        if (mapRef.current) {
+            setTimeout(() => {
+                mapRef.current.fitToCoordinates([USER_LOCATION, DRIVER_START], {
+                    edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+                    animated: true,
+                });
+            }, 500);
+        }
     }, []);
 
     return (
         <View style={[styles.container, style]}>
-            <ImageBackground source={{ uri: MAP_IMAGE }} style={styles.mapImage} resizeMode="cover">
-                {/* Destination / User Location (Static center-ish) */}
-                <View style={styles.destinationMarker}>
-                    <View style={styles.markerPin}>
-                        <MapPin color={COLORS.primary} size={24} fill={COLORS.white} />
-                    </View>
-                    <View style={styles.markerPulse} />
-                </View>
-
-                {/* Driver (Animated) */}
-                <Animated.View
-                    style={[
-                        styles.driverMarker,
-                        {
-                            transform: [
-                                { translateX: driverPosition.x },
-                                { translateY: driverPosition.y },
-                                // { rotate: rotation } // Rotation creates issues with TranslateXY combined sometimes in simple mocks without careful offsets, safer to just translate
-                            ]
-                        }
-                    ]}
+            <View style={styles.mapWrapper}>
+                <MapView
+                    ref={mapRef}
+                    style={styles.map}
+                    provider={PROVIDER_GOOGLE}
+                    customMapStyle={customMapStyle}
+                    initialRegion={USER_LOCATION}
+                    showsUserLocation={false}
+                    scrollEnabled={true}
+                    zoomEnabled={true}
                 >
-                    <View style={styles.driverBg}>
-                        <Navigation color={COLORS.white} size={14} fill={COLORS.white} style={{ transform: [{ rotate: '45deg' }] }} />
-                    </View>
-                </Animated.View>
-            </ImageBackground>
+                    {/* User Marker */}
+                    <Marker coordinate={USER_LOCATION} title="You">
+                        <View style={styles.markerContainer}>
+                            <MapPin color="black" size={32} fill={COLORS.white} />
+                        </View>
+                    </Marker>
+
+                    {/* Agent Marker */}
+                    <Marker coordinate={driverLocation} title="Agent">
+                        <View style={styles.markerContainer}>
+                            <PersonStanding color="black" size={32} fill={COLORS.warning} />
+                        </View>
+                    </Marker>
+
+                    {/* Route */}
+                    <Polyline
+                        coordinates={[USER_LOCATION, driverLocation]}
+                        strokeColor="black"
+                        strokeWidth={3}
+                        lineDashPattern={[5, 5]}
+                    />
+                </MapView>
+            </View>
+
+            {/* Separate Stats Box */}
+            <View style={styles.statsContainer}>
+                <View style={styles.statBox}>
+                    <Text style={styles.statLabel}>Distance</Text>
+                    <Text style={styles.statValue}>{distance} km</Text>
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.statBox}>
+                    <Text style={styles.statLabel}>Time</Text>
+                    <Text style={styles.statValue}>{eta} min</Text>
+                </View>
+            </View>
         </View>
     );
 }
@@ -83,50 +229,62 @@ export default function LiveTrackingMap({ style }) {
 const styles = StyleSheet.create({
     container: {
         overflow: 'hidden',
-        borderRadius: THEME.borderRadius.m,
-        backgroundColor: COLORS.surface,
+        borderRadius: THEME.borderRadius.l,
+        backgroundColor: COLORS.white,
+        position: 'relative',
+        marginBottom: 20,
+        marginTop: 10,
+        borderWidth: 2,
+        borderColor: '#333333', // Dark grey border
     },
-    mapImage: {
+    mapWrapper: {
+        flex: 1, // Takes available space
+        borderTopLeftRadius: THEME.borderRadius.l,
+        borderTopRightRadius: THEME.borderRadius.l,
+        overflow: 'hidden',
+    },
+    map: {
         width: '100%',
         height: '100%',
     },
-    destinationMarker: {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        marginLeft: -12,
-        marginTop: -24,
+    markerContainer: {
         alignItems: 'center',
         justifyContent: 'center',
     },
-    markerPin: {
-        zIndex: 2,
-    },
-    markerPulse: {
-        position: 'absolute',
-        bottom: 0,
-        width: 10,
-        height: 4,
-        borderRadius: 2,
-        backgroundColor: 'rgba(0,0,0,0.3)',
-        zIndex: 1,
-    },
-    driverMarker: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        zIndex: 10,
-    },
-    driverBg: {
-        backgroundColor: COLORS.secondary,
-        padding: 6,
-        borderRadius: 20,
-        borderWidth: 2,
-        borderColor: COLORS.white,
-        elevation: 4,
+    statsContainer: {
+        backgroundColor: COLORS.white,
+        paddingVertical: 15,
+        paddingHorizontal: 12,
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        borderBottomLeftRadius: THEME.borderRadius.l,
+        borderBottomRightRadius: THEME.borderRadius.l,
+        borderTopWidth: 1,
+        borderTopColor: '#f0f0f0',
+        elevation: 2, // Subtle shadow for separation
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+    },
+    statBox: {
+        alignItems: 'center',
+    },
+    divider: {
+        width: 1,
+        height: '60%',
+        backgroundColor: COLORS.border,
+    },
+    statLabel: {
+        fontSize: 12,
+        color: COLORS.textLight,
+        marginBottom: 4,
+        fontWeight: '600',
+    },
+    statValue: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: COLORS.text,
     }
 });

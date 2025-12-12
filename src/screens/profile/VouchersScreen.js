@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Tag, Copy } from 'lucide-react-native';
+import { Tag, Copy, ArrowLeft } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 
@@ -11,6 +12,8 @@ const VOUCHERS = [
 ];
 
 export default function VouchersScreen() {
+    const navigation = useNavigation();
+
     const renderItem = ({ item }) => (
         <View style={styles.card}>
             <View style={styles.left}>
@@ -30,7 +33,11 @@ export default function VouchersScreen() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <ArrowLeft color={COLORS.text} size={24} />
+                </TouchableOpacity>
                 <Text style={styles.title}>My Vouchers</Text>
+                <View style={{ width: 24 }} />
             </View>
             <FlatList
                 data={VOUCHERS}
@@ -49,10 +56,21 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.background,
     },
     header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         padding: THEME.spacing.m,
         backgroundColor: COLORS.surface,
         borderBottomWidth: 1,
         borderBottomColor: COLORS.border,
+    },
+    backButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     title: {
         fontSize: 20,

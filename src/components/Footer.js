@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
         alignItems: 'center',
         width: '100%',
-        marginBottom: -20,
+        marginBottom: -10,
     },
     brandingImage: {
         width: width,

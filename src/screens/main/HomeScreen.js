@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Switch, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MapPin, User, ChevronDown, Star, Clock, Sparkles } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,171 +35,222 @@ export default function HomeScreen({ navigation }) {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Background Theme - Soft, unique cream gradient */}
-                <LinearGradient
-                    colors={['#edc4adff', '#FFFFFF']} // Soft Cream to White
-                    style={styles.backgroundTheme}
+        <View style={styles.container}>
+            {/* Background Theme - Soft, unique cream gradient */}
+            <LinearGradient
+                colors={['#ffffffff', '#ffffffff']} // Soft Cream to White
+                style={styles.backgroundTheme}
+            />
+            <SafeAreaView style={styles.safeArea}>
+                <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <View style={styles.headerLeft}>
+                            <TouchableOpacity style={styles.logoButton} onPress={() => navigation.openDrawer && navigation.openDrawer()}>
+                                <View style={styles.logoIcon}>
+                                    <Text style={styles.logoText}>FH</Text>
+                                </View>
+                            </TouchableOpacity>
+
+                            <View style={styles.locationWrapper}>
+                                <Text style={styles.locationLabel}>Current Location</Text>
+                                <TouchableOpacity
+                                    style={styles.locationContainer}
+                                    onPress={() => setShowAddressModal(true)}
+                                    activeOpacity={0.8}
+                                >
+                                    <MapPin color={COLORS.primary} size={16} />
+                                    <View style={styles.addressBox}>
+                                        <Text
+                                            style={styles.locationText}
+                                            numberOfLines={1}
+                                            ellipsizeMode="tail"
+                                            adjustsFontSizeToFit={true}
+                                            minimumFontScale={0.8}
+                                        >
+                                            {location?.address || user?.city ? (location?.address || `${user.city}, India`) : 'Select Location'}
+                                        </Text>
+                                    </View>
+                                    <ChevronDown color={COLORS.text} size={16} />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <TouchableOpacity style={styles.profileButton} onPress={() => navigation.navigate('Profile')}>
+                            <User color={COLORS.primary} size={24} />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Hero Content */}
+                    <View style={[styles.heroContainer, { paddingHorizontal: THEME.spacing.m }]}>
+                        <Text style={styles.heroTitle}>“We’ve got you, {user?.name?.split('!! ')[0] || 'Guest'}!</Text>
+                        <View style={styles.taglineContainer}>
+                            <Text style={styles.taglineText}>Expertise you can trust, right at your doorstep.</Text>
+                        </View>
+                    </View>
+
+                    {/* Slogan 1 */}
+                    <View style={[styles.sloganContainer, { marginBottom: 2 }]}>
+                        <Sparkles color={COLORS.secondary} size={16} style={{ marginRight: 8 }} />
+                        <Text style={styles.sloganText}>Unbeatable Offers, Just for You! ✨</Text>
+                    </View>
+
+                    {/* Banner */}
+                    <Banner containerStyle={{ marginHorizontal: THEME.spacing.m, marginBottom: 8 }} />
+
+                    {/* Slogan 2 & Club Toggle */}
+                    <View style={[styles.sloganContainer, { marginBottom: 1, marginTop: 0, paddingTop: 2, paddingHorizontal: THEME.spacing.m, justifyContent: 'space-between' }]}>
+                        <Text style={[styles.sloganTextSecondary, { flex: 1, textAlign: 'left', marginHorizontal: 0 }]}>
+                            Browse Our Top-Rated Categories
+                        </Text>
+                        <TouchableOpacity
+                            onPress={() => {
+                                if (!user?.isClubMember) {
+                                    navigation.navigate('Subscription');
+                                }
+                            }}
+                            activeOpacity={0.8}
+                        >
+                            <LinearGradient
+                                colors={user?.isClubMember ? ['#FF6600', '#FF8533'] : ['#EEEEEE', '#E0E0E0']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={[
+                                    styles.clubToggle,
+                                    user?.isClubMember && {
+                                        borderWidth: 0,
+                                        width: 60,
+                                        height: 30,
+                                        borderRadius: 20
+                                    }
+                                ]}
+                            >
+                                <Text style={[
+                                    styles.clubToggleText,
+                                    user?.isClubMember
+                                        ? {
+                                            color: '#FFFFFF',
+                                            marginRight: 0,
+                                            marginLeft: 0,
+                                            fontSize: 20,
+                                            fontFamily: Platform.OS === 'ios' ? 'Arial-BoldMT' : 'Roboto',
+                                            fontWeight: '900',
+                                            alignSelf: 'center',
+                                            letterSpacing: -0.5
+                                        }
+                                        : { color: '#757575', marginLeft: 24 }
+                                ]}>
+                                    {user?.isClubMember ? "club" : "Club"}
+                                </Text>
+                                {!user?.isClubMember && (
+                                    <View style={[
+                                        styles.clubThumb,
+                                        { left: 2, backgroundColor: '#BDBDBD' }
+                                    ]} />
+                                )}
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Categories - 2 Rows Horizontal Scroll */}
+                    <View style={[styles.sectionHeader, { paddingHorizontal: THEME.spacing.m }]}>
+                        <Text style={styles.sectionTitle}>Categories</Text>
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll} contentContainerStyle={{ paddingHorizontal: THEME.spacing.m }}>
+                        {CATEGORIES.map((cat) => (
+                            <TouchableOpacity
+                                key={cat.id}
+                                style={styles.categoryCard}
+                                onPress={() => navigation.navigate('Fresh Hands', { categoryId: cat.id })}
+                                activeOpacity={0.9}
+                            >
+                                <View style={styles.categoryIconContainer}>
+                                    {cat.image ? (
+                                        <Image source={{ uri: cat.image }} style={styles.categoryImage} resizeMode="cover" />
+                                    ) : (
+                                        <Text style={styles.categoryIconText}>{cat.name[0]}</Text>
+                                    )}
+                                </View>
+                                <View style={styles.categoryInfo}>
+                                    <Text style={styles.categoryName} numberOfLines={1}>{cat.name}</Text>
+                                    <Text style={styles.categoryTagline} numberOfLines={1}>{cat.tagline}</Text>
+                                    <Text style={styles.categoryPricing} numberOfLines={1}>{cat.pricing}</Text>
+                                    <View style={styles.categoryStats}>
+                                        <View style={styles.statRow}>
+                                            <Star size={10} color={COLORS.warning} fill={COLORS.warning} />
+                                            <Text style={styles.statText}>{cat.rating} ({cat.reviewCount})</Text>
+                                        </View>
+                                        <View style={styles.statRow}>
+                                            <Clock size={10} color={COLORS.textLight} />
+                                            <Text style={styles.statText}>{cat.arrivalTime}</Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+
+
+
+                    {/* Popular Services */}
+                    <View style={[styles.sectionHeader, { paddingHorizontal: THEME.spacing.m }]}>
+                        <Text style={styles.sectionTitle}>Popular Services</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('Fresh Hands')}>
+                            <Text style={styles.seeAll}>See All</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.popularList} contentContainerStyle={{ paddingHorizontal: THEME.spacing.m }}>
+                        {POPULAR_SERVICES.map(renderServiceCard)}
+                    </ScrollView>
+
+                    {/* Pagination Dots */}
+                    <View style={styles.paginationDots}>
+                        <View style={[styles.dot, styles.activeDot]} />
+                        <View style={styles.dot} />
+                        <View style={styles.dot} />
+                    </View>
+
+                    {/* Footer Branding */}
+                    <View style={{ paddingHorizontal: THEME.spacing.m }}>
+                        <Footer />
+                    </View>
+                </ScrollView >
+
+                <AddressModal
+                    visible={showAddressModal}
+                    onClose={() => setShowAddressModal(false)}
+                    onSelectLocation={handleSelectLocation}
+                    currentAddress={location?.address}
                 />
 
-                {/* Header */}
-                <View style={styles.header}>
-                    <View style={styles.headerLeft}>
-                        <TouchableOpacity style={styles.logoButton} onPress={() => navigation.openDrawer && navigation.openDrawer()}>
-                            <View style={styles.logoIcon}>
-                                <Text style={styles.logoText}>FH</Text>
-                            </View>
-                        </TouchableOpacity>
-
-                        <View style={styles.locationWrapper}>
-                            <Text style={styles.locationLabel}>Current Location</Text>
-                            <TouchableOpacity
-                                style={styles.locationContainer}
-                                onPress={() => setShowAddressModal(true)}
-                                activeOpacity={0.8}
-                            >
-                                <MapPin color={COLORS.primary} size={16} />
-                                <View style={styles.addressBox}>
-                                    <Text
-                                        style={styles.locationText}
-                                        numberOfLines={1}
-                                        ellipsizeMode="tail"
-                                        adjustsFontSizeToFit={true}
-                                        minimumFontScale={0.8}
-                                    >
-                                        {location?.address || user?.city ? (location?.address || `${user.city}, India`) : 'Select Location'}
-                                    </Text>
-                                </View>
-                                <ChevronDown color={COLORS.text} size={16} />
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-
-                    <TouchableOpacity style={styles.profileButton} onPress={() => navigation.navigate('Profile')}>
-                        <User color={COLORS.primary} size={24} />
-                    </TouchableOpacity>
-                </View>
-
-                {/* Hero Content */}
-                <View style={[styles.heroContainer, { paddingHorizontal: THEME.spacing.m }]}>
-                    <Text style={styles.heroTitle}>Welcome back, {user?.name?.split(' ')[0] || 'Guest'}!</Text>
-                    <View style={styles.taglineContainer}>
-                        <Text style={styles.taglineText}>Expertise you can trust, right at your doorstep.</Text>
-                    </View>
-                </View>
-
-                {/* Slogan 1 */}
-                <View style={[styles.sloganContainer, { marginBottom: 2 }]}>
-                    <Sparkles color={COLORS.secondary} size={16} style={{ marginRight: 8 }} />
-                    <Text style={styles.sloganText}>Unbeatable Offers, Just for You! ✨</Text>
-                </View>
-
-                {/* Banner */}
-                <Banner containerStyle={{ marginHorizontal: THEME.spacing.m, marginBottom: 8 }} />
-
-                {/* Slogan 2 */}
-                <View style={[styles.sloganContainer, { marginBottom: 10, marginTop: 0, paddingTop: 4 }]}>
-                    <Text style={[styles.sloganTextSecondary, { textAlign: 'center', marginHorizontal: 20 }]}>Browse Our Top-Rated Categories</Text>
-                </View>
-
-                {/* Categories - 2 Rows Horizontal Scroll */}
-                <View style={[styles.sectionHeader, { paddingHorizontal: THEME.spacing.m }]}>
-                    <Text style={styles.sectionTitle}>Categories</Text>
-                </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll} contentContainerStyle={{ paddingHorizontal: THEME.spacing.m }}>
-                    {CATEGORIES.map((cat) => (
+                {/* Live Order Card */}
+                {
+                    activeOrder && (
                         <TouchableOpacity
-                            key={cat.id}
-                            style={styles.categoryCard}
-                            onPress={() => navigation.navigate('Fresh Hands', { categoryId: cat.id })}
+                            style={styles.liveOrderCard}
+                            onPress={() => setShowOrderModal(true)}
                             activeOpacity={0.9}
                         >
-                            <View style={styles.categoryIconContainer}>
-                                {cat.image ? (
-                                    <Image source={{ uri: cat.image }} style={styles.categoryImage} resizeMode="cover" />
-                                ) : (
-                                    <Text style={styles.categoryIconText}>{cat.name[0]}</Text>
-                                )}
+                            <View style={styles.liveOrderInfo}>
+                                <Text style={styles.liveOrderTitle}>Ongoing Service</Text>
+                                <Text style={styles.liveOrderStatus}>{activeOrder.status} • {activeOrder.eta}</Text>
                             </View>
-                            <View style={styles.categoryInfo}>
-                                <Text style={styles.categoryName} numberOfLines={1}>{cat.name}</Text>
-                                <Text style={styles.categoryTagline} numberOfLines={1}>{cat.tagline}</Text>
-                                <Text style={styles.categoryPricing} numberOfLines={1}>{cat.pricing}</Text>
-                                <View style={styles.categoryStats}>
-                                    <View style={styles.statRow}>
-                                        <Star size={10} color={COLORS.warning} fill={COLORS.warning} />
-                                        <Text style={styles.statText}>{cat.rating} ({cat.reviewCount})</Text>
-                                    </View>
-                                    <View style={styles.statRow}>
-                                        <Clock size={10} color={COLORS.textLight} />
-                                        <Text style={styles.statText}>{cat.arrivalTime}</Text>
-                                    </View>
-                                </View>
+                            <View style={styles.liveOrderBadge}>
+                                <Text style={styles.liveOrderBadgeText}>Track</Text>
                             </View>
                         </TouchableOpacity>
-                    ))}
-                </ScrollView>
+                    )
+                }
 
-
-
-                {/* Popular Services */}
-                <View style={[styles.sectionHeader, { paddingHorizontal: THEME.spacing.m }]}>
-                    <Text style={styles.sectionTitle}>Popular Services</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('Fresh Hands')}>
-                        <Text style={styles.seeAll}>See All</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.popularList} contentContainerStyle={{ paddingHorizontal: THEME.spacing.m }}>
-                    {POPULAR_SERVICES.map(renderServiceCard)}
-                </ScrollView>
-
-                {/* Pagination Dots */}
-                <View style={styles.paginationDots}>
-                    <View style={[styles.dot, styles.activeDot]} />
-                    <View style={styles.dot} />
-                    <View style={styles.dot} />
-                </View>
-
-                {/* Footer Branding */}
-                <View style={{ paddingHorizontal: THEME.spacing.m }}>
-                    <Footer />
-                </View>
-            </ScrollView >
-
-            <AddressModal
-                visible={showAddressModal}
-                onClose={() => setShowAddressModal(false)}
-                onSelectLocation={handleSelectLocation}
-                currentAddress={location?.address}
-            />
-
-            {/* Live Order Card */}
-            {
-                activeOrder && (
-                    <TouchableOpacity
-                        style={styles.liveOrderCard}
-                        onPress={() => setShowOrderModal(true)}
-                        activeOpacity={0.9}
-                    >
-                        <View style={styles.liveOrderInfo}>
-                            <Text style={styles.liveOrderTitle}>Ongoing Service</Text>
-                            <Text style={styles.liveOrderStatus}>{activeOrder.status} • {activeOrder.eta}</Text>
-                        </View>
-                        <View style={styles.liveOrderBadge}>
-                            <Text style={styles.liveOrderBadgeText}>Track</Text>
-                        </View>
-                    </TouchableOpacity>
-                )
-            }
-
-            <OrderDetailsModal
-                visible={showOrderModal}
-                onClose={() => setShowOrderModal(false)}
-                order={activeOrder}
-            />
-        </SafeAreaView >
+                <OrderDetailsModal
+                    visible={showOrderModal}
+                    onClose={() => setShowOrderModal(false)}
+                    order={activeOrder}
+                />
+            </SafeAreaView >
+        </View>
     );
 }
 
@@ -207,6 +258,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
+    },
+    safeArea: {
+        flex: 1,
     },
     backgroundTheme: {
         position: 'absolute',
@@ -263,7 +317,7 @@ const styles = StyleSheet.create({
     locationWrapper: {
         justifyContent: 'center',
         flex: 1,
-        marginLeft: 8,
+        marginLeft: 0,
     },
     locationLabel: {
         fontSize: 10,
@@ -276,9 +330,13 @@ const styles = StyleSheet.create({
     locationContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 2,
+        paddingVertical: 6,
+        paddingHorizontal: 10,
         alignSelf: 'flex-start',
         maxWidth: '100%',
+        borderWidth: 1,
+        borderColor: '#E0E0E0', // Light grey border
+        borderRadius: 20,
     },
     addressBox: {
         flex: 1,
@@ -452,7 +510,7 @@ const styles = StyleSheet.create({
         bottom: 80, // Above tabs
         left: 20,
         right: 86, // Leave space for chat button
-        backgroundColor: COLORS.secondary,
+        backgroundColor: 'navy',
         borderRadius: THEME.borderRadius.m,
         padding: THEME.spacing.m,
         flexDirection: 'row',
@@ -484,8 +542,32 @@ const styles = StyleSheet.create({
         borderRadius: 4,
     },
     liveOrderBadgeText: {
-        color: COLORS.secondary,
+        color: 'navy',
         fontWeight: 'bold',
         fontSize: 10,
+    },
+    clubToggle: {
+        width: 80,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+        flexDirection: 'row',
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.05)',
+    },
+    clubThumb: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        position: 'absolute',
+        top: 1,
+        elevation: 2,
+    },
+    clubToggleText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        zIndex: 1,
     },
 });

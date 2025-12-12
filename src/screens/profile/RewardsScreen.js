@@ -1,16 +1,22 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Gift, Award } from 'lucide-react-native';
+import { Gift, Award, ArrowLeft } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 
 export default function RewardsScreen() {
+    const navigation = useNavigation();
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.content}>
                 <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <ArrowLeft color={COLORS.text} size={24} />
+                    </TouchableOpacity>
                     <Text style={styles.title}>My Rewards</Text>
+                    <View style={{ width: 24 }} />
                 </View>
 
                 <View style={styles.balanceCard}>
@@ -42,7 +48,18 @@ const styles = StyleSheet.create({
         padding: THEME.spacing.m,
     },
     header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         marginBottom: THEME.spacing.l,
+    },
+    backButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     title: {
         fontSize: 24,

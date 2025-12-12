@@ -108,12 +108,27 @@ export const OrderProvider = ({ children }) => {
         }, 40000);
     };
 
+    const completeActiveOrder = () => {
+        setActiveOrder(prev => {
+            if (!prev) return null;
+            const completedOrder = {
+                ...prev,
+                status: 'Completed',
+                eta: 'Completed',
+                completedAt: new Date(),
+                statusLog: prev.statusLog.map(s => s.status === 'Service Completed' ? { ...s, timestamp: new Date(), completed: true } : s)
+            };
+            setOrderHistory(history => [completedOrder, ...history]);
+            return null; // Remove from active
+        });
+    };
+
     const clearOrder = () => {
         setActiveOrder(null);
     };
 
     return (
-        <OrderContext.Provider value={{ activeOrder, orderHistory, createOrder, clearOrder }}>
+        <OrderContext.Provider value={{ activeOrder, orderHistory, createOrder, clearOrder, completeActiveOrder }}>
             {children}
         </OrderContext.Provider>
     );

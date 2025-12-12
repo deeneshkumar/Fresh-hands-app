@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, User, Mail, Phone, MapPin } from 'lucide-react-native'; // Changed icons
+import { ArrowLeft, User, Mail, Phone, MapPin } from 'lucide-react-native'; // Changed icons
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
@@ -37,79 +37,85 @@ export default function ProfileDetailsScreen({ navigation }) {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ChevronLeft color={COLORS.text} size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Edit Profile</Text>
-                <View style={{ width: 24 }} />
-            </View>
-
-            <ScrollView contentContainerStyle={styles.content}>
-                <View style={styles.avatarContainer}>
-                    <View style={styles.avatar}>
-                        <User color={COLORS.white} size={40} />
-                    </View>
-                    <TouchableOpacity style={styles.changePhotoBtn}>
-                        <Text style={styles.changePhotoText}>Change Photo</Text>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={{ flex: 1 }}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+            >
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <ArrowLeft color={COLORS.text} size={24} />
                     </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Edit Profile</Text>
+                    <View style={{ width: 24 }} />
                 </View>
 
-                <View style={styles.form}>
-                    <Input
-                        label="Full Name"
-                        value={name}
-                        onChangeText={setName}
-                        placeholder="Enter your name"
-                        icon={<User color={COLORS.textLight} size={20} />}
-                        style={styles.input}
-                    />
-                    <Input
-                        label="Email Address"
-                        value={email}
-                        onChangeText={setEmail}
-                        placeholder="Enter your email"
-                        keyboardType="email-address"
-                        icon={<Mail color={COLORS.textLight} size={20} />}
-                        style={styles.input}
-                    />
-                    <Input
-                        label="Phone Number"
-                        value={phone}
-                        onChangeText={setPhone}
-                        placeholder="Enter your phone number"
-                        keyboardType="phone-pad"
-                        icon={<Phone color={COLORS.textLight} size={20} />}
-                        style={styles.input}
-                    />
-                    <Input
-                        label="City"
-                        value={city}
-                        onChangeText={setCity}
-                        placeholder="Enter your city"
-                        icon={<MapPin color={COLORS.textLight} size={20} />}
-                        style={styles.input}
-                    />
-                    <Input
-                        label="Address"
-                        value={address}
-                        onChangeText={setAddress}
-                        placeholder="Enter your full address"
-                        multiline
-                        numberOfLines={3}
-                        inputStyle={{ height: 80, textAlignVertical: 'top' }} // Use inputStyle for the text box
-                        style={styles.input} // Container style
-                        icon={<MapPin color={COLORS.textLight} size={20} />}
-                    />
+                <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+                    <View style={styles.avatarContainer}>
+                        <View style={styles.avatar}>
+                            <User color={COLORS.white} size={40} />
+                        </View>
+                        <TouchableOpacity style={styles.changePhotoBtn}>
+                            <Text style={styles.changePhotoText}>Change Photo</Text>
+                        </TouchableOpacity>
+                    </View>
 
-                    <Button
-                        title="Save Changes"
-                        onPress={handleSave}
-                        isLoading={isLoading}
-                        style={styles.saveBtn}
-                    />
-                </View>
-            </ScrollView>
+                    <View style={styles.form}>
+                        <Input
+                            label="Full Name"
+                            value={name}
+                            onChangeText={setName}
+                            placeholder="Enter your name"
+                            icon={<User color={COLORS.textLight} size={20} />}
+                            style={styles.input}
+                        />
+                        <Input
+                            label="Email Address"
+                            value={email}
+                            onChangeText={setEmail}
+                            placeholder="Enter your email"
+                            keyboardType="email-address"
+                            icon={<Mail color={COLORS.textLight} size={20} />}
+                            style={styles.input}
+                        />
+                        <Input
+                            label="Phone Number"
+                            value={phone}
+                            onChangeText={setPhone}
+                            placeholder="Enter your phone number"
+                            keyboardType="phone-pad"
+                            icon={<Phone color={COLORS.textLight} size={20} />}
+                            style={styles.input}
+                        />
+                        <Input
+                            label="City"
+                            value={city}
+                            onChangeText={setCity}
+                            placeholder="Enter your city"
+                            icon={<MapPin color={COLORS.textLight} size={20} />}
+                            style={styles.input}
+                        />
+                        <Input
+                            label="Address"
+                            value={address}
+                            onChangeText={setAddress}
+                            placeholder="Enter your full address"
+                            multiline
+                            numberOfLines={3}
+                            inputStyle={{ height: 80, textAlignVertical: 'top' }} // Use inputStyle for the text box
+                            style={styles.input} // Container style
+                            icon={<MapPin color={COLORS.textLight} size={20} />}
+                        />
+
+                        <Button
+                            title="Save Changes"
+                            onPress={handleSave}
+                            isLoading={isLoading}
+                            style={styles.saveBtn}
+                        />
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
@@ -129,7 +135,12 @@ const styles = StyleSheet.create({
         borderBottomColor: COLORS.border,
     },
     backButton: {
-        padding: 4,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     headerTitle: {
         fontSize: 18,

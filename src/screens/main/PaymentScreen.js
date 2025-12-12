@@ -4,16 +4,26 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 import Button from '../../components/Button';
+import { useAuth } from '../../context/AuthContext';
 
 export default function PaymentScreen({ route, navigation }) {
     const { orderDetails } = route.params;
+    const { deductFromWallet } = useAuth();
     const [status, setStatus] = useState('processing'); // processing, success, failed
 
     useEffect(() => {
         // Simulate payment processing time
         const timer = setTimeout(() => {
-            // Randomly succeed or fail (Mostly succeed for demo)
-            const isSuccess = Math.random() > 0.1;
+            let isSuccess = false;
+
+            if (orderDetails.paymentMethod === 'wallet') {
+                const deducted = deductFromWallet(orderDetails.billDetails.grandTotal);
+                isSuccess = deducted;
+            } else {
+                // Randomly succeed or fail (Mostly succeed for demo)
+                isSuccess = Math.random() > 0.1;
+            }
+
             setStatus(isSuccess ? 'success' : 'failed');
 
             if (isSuccess) {
@@ -21,7 +31,7 @@ export default function PaymentScreen({ route, navigation }) {
                     navigation.replace('OrderConfirmation', { orderDetails });
                 }, 1500);
             }
-        }, 3000);
+        }, 2000);
 
         return () => clearTimeout(timer);
     }, []);

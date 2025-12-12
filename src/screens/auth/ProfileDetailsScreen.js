@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { ArrowLeft } from 'lucide-react-native';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import { COLORS } from '../../constants/colors';
@@ -12,6 +13,7 @@ import { isValidName, isValidEmail, isValidCity } from '../../utils/validation';
 
 export default function ProfileDetailsScreen() {
     const { login } = useAuth();
+    const navigation = useNavigation();
     const route = useRoute();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -51,6 +53,9 @@ export default function ProfileDetailsScreen() {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.content}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <ArrowLeft color={COLORS.text} size={24} />
+                </TouchableOpacity>
                 <Text style={styles.title}>Complete Profile</Text>
                 <Text style={styles.subtitle}>
                     Tell us a bit about yourself
@@ -112,6 +117,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: COLORS.textLight,
         marginBottom: THEME.spacing.xl,
+    },
+    backButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: THEME.spacing.l,
     },
     button: {
         marginTop: THEME.spacing.l,

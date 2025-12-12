@@ -1,22 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, TrendingUp, Star, Sparkles } from 'lucide-react-native';
+import { TrendingUp, Star, Sparkles } from 'lucide-react-native';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 import { SERVICES, FEATURED_SERVICES } from '../../constants/dummyData';
 import Banner from '../../components/Banner';
-import Input from '../../components/Input';
 import ServiceCard from '../../components/ServiceCard';
 
 export default function ExploreScreen({ navigation }) {
-    const [searchQuery, setSearchQuery] = useState('');
 
-    // Filter services based on search query
-    const filteredServices = SERVICES.filter(s =>
-        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.keywords?.some(k => k.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    // Use all services directly as there is no search
+    const filteredServices = SERVICES;
 
     const trendingServices = filteredServices.filter(s => s.rating >= 4.8).slice(0, 5);
     const topRatedServices = filteredServices.filter(s => s.rating >= 4.7).slice(5, 10);
@@ -32,16 +27,7 @@ export default function ExploreScreen({ navigation }) {
                 <Text style={styles.headerTitle}>Explore</Text>
                 <Text style={styles.headerSubtitle}>Discover what's trending in your neighborhood.</Text>
 
-                {/* Search Bar */}
-                <View style={styles.searchContainer}>
-                    <Search color={COLORS.textLight} size={20} style={styles.searchIcon} />
-                    <Input
-                        placeholder="Search for anything..."
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        style={styles.searchInput}
-                    />
-                </View>
+
 
                 {/* Top Rated Partners Banner */}
                 <View style={styles.bannerContainer}>
@@ -105,7 +91,7 @@ export default function ExploreScreen({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
+        backgroundColor: '#ffffffff',
     },
     backgroundTheme: {
         position: 'absolute',
@@ -113,7 +99,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         height: '40%',
-        backgroundColor: COLORS.primary + '10', // 10% opacity primary color
+        backgroundColor: '#ffffffff', // 10% opacity primary color
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
     },
@@ -132,24 +118,6 @@ const styles = StyleSheet.create({
         color: COLORS.textLight,
         marginBottom: THEME.spacing.m,
         fontStyle: 'italic',
-    },
-    searchContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: THEME.spacing.l,
-        position: 'relative',
-    },
-    searchIcon: {
-        position: 'absolute',
-        left: 12,
-        zIndex: 1,
-        top: 14,
-    },
-    searchInput: {
-        paddingLeft: 40,
-        backgroundColor: COLORS.white,
-        elevation: 2,
-        borderRadius: THEME.borderRadius.m,
     },
     bannerContainer: {
         marginBottom: THEME.spacing.l,
