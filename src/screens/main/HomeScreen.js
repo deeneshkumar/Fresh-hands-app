@@ -12,6 +12,7 @@ import Banner from '../../components/Banner';
 import ServiceCard from '../../components/ServiceCard';
 import Footer from '../../components/Footer';
 import OrderDetailsModal from './OrderDetailsModal';
+import LocationPermissionBanner from '../../components/LocationPermissionBanner';
 
 import AddressModal from './AddressModal';
 
@@ -69,7 +70,9 @@ export default function HomeScreen({ navigation }) {
                                             adjustsFontSizeToFit={true}
                                             minimumFontScale={0.8}
                                         >
-                                            {location?.address || user?.city ? (location?.address || `${user.city}, India`) : 'Select Location'}
+                                            {location?.flat || location?.street
+                                                ? `${location.flat ? location.flat + ', ' : ''}${location.street || ''}`.replace(/^, /, '').replace(/, $/, '')
+                                                : (location?.address || user?.city || 'Select Location')}
                                         </Text>
                                     </View>
                                     <ChevronDown color={COLORS.text} size={16} />
@@ -105,50 +108,20 @@ export default function HomeScreen({ navigation }) {
                             Browse Our Top-Rated Categories
                         </Text>
                         <TouchableOpacity
-                            onPress={() => {
-                                if (!user?.isClubMember) {
-                                    navigation.navigate('Subscription');
-                                }
-                            }}
+                            onPress={() => navigation.navigate('Subscription')}
                             activeOpacity={0.8}
                         >
                             <LinearGradient
-                                colors={user?.isClubMember ? ['#FF6600', '#FF8533'] : ['#EEEEEE', '#E0E0E0']}
+                                colors={['#FF6600', '#FF8533']} // Standard Primary Orange for all
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
-                                style={[
-                                    styles.clubToggle,
-                                    user?.isClubMember && {
-                                        borderWidth: 0,
-                                        width: 60,
-                                        height: 30,
-                                        borderRadius: 20
-                                    }
-                                ]}
+                                style={styles.clubButton}
                             >
-                                <Text style={[
-                                    styles.clubToggleText,
-                                    user?.isClubMember
-                                        ? {
-                                            color: '#FFFFFF',
-                                            marginRight: 0,
-                                            marginLeft: 0,
-                                            fontSize: 20,
-                                            fontFamily: Platform.OS === 'ios' ? 'Arial-BoldMT' : 'Roboto',
-                                            fontWeight: '900',
-                                            alignSelf: 'center',
-                                            letterSpacing: -0.5
-                                        }
-                                        : { color: '#757575', marginLeft: 24 }
-                                ]}>
-                                    {user?.isClubMember ? "club" : "Club"}
-                                </Text>
-                                {!user?.isClubMember && (
-                                    <View style={[
-                                        styles.clubThumb,
-                                        { left: 2, backgroundColor: '#BDBDBD' }
-                                    ]} />
-                                )}
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <Text style={styles.clubButtonText}>
+                                        {user?.isClubMember ? "Club" : "Join Club"}
+                                    </Text>
+                                </View>
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>
@@ -250,6 +223,7 @@ export default function HomeScreen({ navigation }) {
                     order={activeOrder}
                 />
             </SafeAreaView >
+            <LocationPermissionBanner />
         </View>
     );
 }
@@ -344,8 +318,8 @@ const styles = StyleSheet.create({
     },
     locationText: {
         fontWeight: 'bold',
-        fontSize: 14,
-        color: COLORS.text, // Black text
+        fontSize: 13, // Slightly smaller to view properly
+        color: COLORS.text,
     },
     profileButton: {
         padding: 8,
@@ -546,28 +520,18 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 10,
     },
-    clubToggle: {
-        width: 80,
-        height: 32,
+    clubButton: {
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        position: 'relative',
         flexDirection: 'row',
-        borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
     },
-    clubThumb: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        position: 'absolute',
-        top: 1,
-        elevation: 2,
-    },
-    clubToggleText: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        zIndex: 1,
+    clubButtonText: {
+        fontSize: 15,
+        fontWeight: '900',
+        letterSpacing: 0,
+        color: '#FFFFFF',
     },
 });

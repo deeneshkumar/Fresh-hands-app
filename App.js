@@ -36,7 +36,7 @@ export default function App() {
     <SafeAreaProvider>
       <AuthProvider>
         <OrderProvider>
-          <StatusBar style="auto" translucent backgroundColor="transparent" />
+          <StatusBar style="dark" backgroundColor="#FFFFFF" />
           <RootNavigator />
         </OrderProvider>
       </AuthProvider>

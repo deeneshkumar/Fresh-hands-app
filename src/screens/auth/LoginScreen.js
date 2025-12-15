@@ -7,6 +7,7 @@ import Input from '../../components/Input';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 
+
 import { isValidPhoneNumber } from '../../utils/validation';
 
 const COUNTRIES = [
@@ -128,7 +129,9 @@ export default function LoginScreen({ navigation }) {
                     </View>
                 </TouchableWithoutFeedback>
             </Modal>
-        </SafeAreaView>
+
+
+        </SafeAreaView >
     );
 }
 

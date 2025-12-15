@@ -1,13 +1,104 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Calendar, Clock, MapPin, CreditCard, Wallet, Banknote, Navigation, Zap, ArrowLeft, CheckCircle2 } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, CreditCard, Wallet, Banknote, Navigation, Zap, ArrowLeft, CheckCircle2, Square, CheckSquare } from 'lucide-react-native';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import { useAuth } from '../../context/AuthContext';
 import AddressModal from './AddressModal';
+import * as Location from 'expo-location';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+
+const MAP_STYLE = [
+    {
+        "elementType": "geometry",
+        "stylers": [{ "color": "#f5f5f5" }]
+    },
+    {
+        "elementType": "labels.icon",
+        "stylers": [{ "visibility": "off" }]
+    },
+    {
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#616161" }]
+    },
+    {
+        "elementType": "labels.text.stroke",
+        "stylers": [{ "color": "#f5f5f5" }]
+    },
+    {
+        "featureType": "administrative.land_parcel",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#bdbdbd" }]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#eeeeee" }]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#757575" }]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#e5e5e5" }]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#9e9e9e" }]
+    },
+    {
+        "featureType": "road",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#ffffff" }]
+    },
+    {
+        "featureType": "road.arterial",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#757575" }]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#dadada" }]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#616161" }]
+    },
+    {
+        "featureType": "road.local",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#9e9e9e" }]
+    },
+    {
+        "featureType": "transit.line",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#e5e5e5" }]
+    },
+    {
+        "featureType": "transit.station",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#eeeeee" }]
+    },
+    {
+        "featureType": "water",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#c9c9c9" }]
+    },
+    {
+        "featureType": "water",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#9e9e9e" }]
+    }
+];
 
 export default function BookingScreen({ route, navigation }) {
     const { service } = route.params;
@@ -24,6 +115,15 @@ export default function BookingScreen({ route, navigation }) {
     const [address, setAddress] = useState(location?.address || user?.city || '');
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [addressError, setAddressError] = useState('');
+    const [mapRegion, setMapRegion] = useState(null);
+    const [isAddressConfirmed, setIsAddressConfirmed] = useState(false);
+
+    // Auto-load map if address exists on mount
+    useEffect(() => {
+        if (address) {
+            updateMapForAddress(address);
+        }
+    }, []); // Run once on mount
 
     // Payment State
     const [paymentMethod, setPaymentMethod] = useState(null);
@@ -57,19 +157,72 @@ export default function BookingScreen({ route, navigation }) {
     const taxes = Math.round(itemTotal * 0.18);
     const grandTotal = itemTotal + convenienceFee + taxes;
 
-    // Handle Address Selection from Modal
-    const handleSelectLocation = (loc) => {
-        setAddress(loc.address);
-        setAddressError('');
+    // Geocode Address to update Map
+    const updateMapForAddress = async (addrText) => {
+        if (!addrText) return;
+        try {
+            let geocoded = await Location.geocodeAsync(addrText);
+            if (geocoded.length > 0) {
+                const { latitude, longitude } = geocoded[0];
+                setMapRegion({
+                    latitude,
+                    longitude,
+                    latitudeDelta: 0.005,
+                    longitudeDelta: 0.005,
+                });
+            }
+        } catch (error) {
+            console.log('Geocoding error:', error);
+        }
     };
 
-    const handleUseCurrentLocation = () => {
-        // Mock location fetch
-        Alert.alert('Location', 'Fetching current location...');
-        setTimeout(() => {
-            setAddress('123, Gandhi Road, Chennai, Tamil Nadu');
-            setAddressError('');
-        }, 1000);
+    const handleSelectLocation = (loc) => {
+        setAddress(loc.address);
+        setIsAddressConfirmed(false);
+        setAddressError('');
+        updateMapForAddress(loc.address);
+    };
+
+    const handleUseCurrentLocation = async () => {
+        try {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'Permission to access location was denied');
+                return;
+            }
+
+            Alert.alert('Location', 'Fetching current location...');
+            let location = await Location.getCurrentPositionAsync({});
+
+            setMapRegion({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
+            });
+
+            // Reverse Geocode
+            let addressResponse = await Location.reverseGeocodeAsync({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude
+            });
+
+            if (addressResponse.length > 0) {
+                const addr = addressResponse[0];
+                const formattedAddress = `${addr.name || ''}, ${addr.street || ''}, ${addr.city || ''}, ${addr.region || ''}, ${addr.postalCode || ''}`.replace(/, ,/g, ',').replace(/^, /, '');
+                setAddress(formattedAddress);
+                setIsAddressConfirmed(false);
+                setAddressError('');
+            } else {
+                setAddress(`${location.coords.latitude}, ${location.coords.longitude}`);
+                setIsAddressConfirmed(false);
+                setAddressError('');
+            }
+
+        } catch (error) {
+            Alert.alert('Error', 'Could not fetch location. Please ensure GPS is enabled.');
+            console.error(error);
+        }
     };
 
     const proceedToPay = () => {
@@ -84,6 +237,11 @@ export default function BookingScreen({ route, navigation }) {
         if (!address.trim()) {
             setAddressError('Address is required');
             Alert.alert('Missing Details', 'Please provide a service address.');
+            return;
+        }
+
+        if (!isAddressConfirmed) {
+            Alert.alert('Confirm Location', 'Please confirm that the location shown on the map is correct.');
             return;
         }
 
@@ -240,28 +398,76 @@ export default function BookingScreen({ route, navigation }) {
                 )}
 
                 {/* Address Section */}
-                <Text style={styles.sectionTitle}>Service Location</Text>
+                <Text style={styles.sectionTitle}>Service Location <Text style={{ color: COLORS.error }}>*</Text></Text>
                 <View style={styles.addressBox}>
                     <Input
                         placeholder="Enter Address / Flat No *"
                         value={address}
                         onChangeText={(text) => {
                             setAddress(text);
+                            setIsAddressConfirmed(false);
                             if (text) setAddressError('');
                         }}
+                        onEndEditing={() => updateMapForAddress(address)}
                         containerStyle={{ marginBottom: 8 }}
                         error={addressError}
                     />
-                    <View style={styles.locationActions}>
-                        <TouchableOpacity style={styles.currentLocationBtn} onPress={handleUseCurrentLocation}>
-                            <Navigation color={COLORS.primary} size={16} />
-                            <Text style={styles.currentLocationText}>Use Current Location</Text>
+
+                    {/* Confirmation Checkbox (Moved here) */}
+                    <TouchableOpacity
+                        style={styles.confirmationRow}
+                        onPress={() => setIsAddressConfirmed(!isAddressConfirmed)}
+                        activeOpacity={0.8}
+                    >
+                        {isAddressConfirmed ? (
+                            <CheckSquare color={COLORS.success || '#4CAF50'} size={24} />
+                        ) : (
+                            <Square color={COLORS.textLight} size={24} />
+                        )}
+                        <Text style={[styles.confirmationText, isAddressConfirmed && { color: COLORS.success || '#4CAF50', fontWeight: 'bold' }]}>
+                            I confirm this is the correct service location
+                        </Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.locationSelectionRow}>
+                        <TouchableOpacity
+                            style={styles.locationOptionCard}
+                            onPress={handleUseCurrentLocation}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.optionIconBg}>
+                                <Navigation color={COLORS.primary} size={20} fill={COLORS.primary + "20"} />
+                            </View>
+                            <Text style={styles.locationOptionText}>Use Current Location</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => setShowAddressModal(true)}>
-                            <Text style={styles.savedAddressLink}>+ Select from Saved Addresses</Text>
+                        <TouchableOpacity
+                            style={styles.locationOptionCard}
+                            onPress={() => setShowAddressModal(true)}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.optionIconBg}>
+                                <MapPin color={COLORS.primary} size={20} />
+                            </View>
+                            <Text style={styles.locationOptionText}>Select Saved Address</Text>
                         </TouchableOpacity>
                     </View>
+
+                    {/* Map Preview */}
+                    {mapRegion && (
+                        <View style={styles.mapPreviewContainer}>
+                            <MapView
+                                provider={PROVIDER_GOOGLE}
+                                style={styles.map}
+                                region={mapRegion}
+                                scrollEnabled={false}
+                                zoomEnabled={false}
+                                customMapStyle={MAP_STYLE}
+                            >
+                                <Marker coordinate={mapRegion} />
+                            </MapView>
+                        </View>
+                    )}
                 </View>
 
                 {/* Payment Section */}
@@ -500,28 +706,65 @@ const styles = StyleSheet.create({
     addressBox: {
         marginBottom: THEME.spacing.l,
     },
-    locationActions: {
-        flexDirection: 'column',
+    locationSelectionRow: {
+        flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginTop: 4,
+        gap: 12,
+        marginBottom: 8,
+        marginTop: 16, // "inch space" (approx 16-24px depending on dens) next to location boxes (above them)
     },
-    currentLocationBtn: {
+    locationOptionCard: {
+        flex: 1,
+        backgroundColor: COLORS.white,
+        borderWidth: 1,
+        borderColor: COLORS.primary + '30',
+        borderRadius: 8,
+        paddingVertical: 14,
+        paddingHorizontal: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        gap: 8,
+    },
+    optionIconBg: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#F0F9FF',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    locationOptionText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: COLORS.primary,
+        textAlign: 'left',
+        flexShrink: 1,
+    },
+    mapPreviewContainer: {
+        height: 150,
+        width: '100%',
+        borderRadius: 12,
+        overflow: 'hidden',
+        marginTop: 12,
+        borderWidth: 1,
+        borderColor: '#000', // Black border
+    },
+    map: {
+        flex: 1,
+    },
+    confirmationRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
-        padding: 4,
+        marginTop: 4, // Reduced from 12 -> "should not have more space from input box"
+        padding: 4,   // Reduced padding
+        // backgroundColor: '#f9f9f9', // Removed bg to make it cleaner? Or keep it? keeping transparent is closer.
     },
-    currentLocationText: {
-        color: COLORS.primary,
-        fontWeight: '600',
+    confirmationText: {
+        marginLeft: 8,
         fontSize: 14,
-    },
-    savedAddressLink: {
-        color: COLORS.primary,
-        fontWeight: '600',
-        fontSize: 14,
-        padding: 4,
+        color: COLORS.text,
+        flex: 1,
     },
     paymentContainer: {
         gap: 12,

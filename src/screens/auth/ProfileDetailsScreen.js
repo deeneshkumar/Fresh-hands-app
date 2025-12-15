@@ -7,6 +7,7 @@ import Button from '../../components/Button';
 import Input from '../../components/Input';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
+
 import { useAuth } from '../../context/AuthContext';
 
 import { isValidName, isValidEmail, isValidCity } from '../../utils/validation';
@@ -17,7 +18,7 @@ export default function ProfileDetailsScreen() {
     const route = useRoute();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
-    const [city, setCity] = useState('');
+
     const [loading, setLoading] = useState(false);
 
     const handleSave = () => {
@@ -31,23 +32,12 @@ export default function ProfileDetailsScreen() {
             return;
         }
 
-        if (!isValidCity(city)) {
-            Alert.alert('Invalid City', 'Please enter your city');
-            return;
-        }
-
         setLoading(true);
         // Simulate API call
         setTimeout(() => {
-            login({ name, email, city, phone: route.params?.phoneNumber });
+            login({ name, email, phone: route.params?.phoneNumber });
             setLoading(false);
         }, 1500);
-    };
-
-    const handleUseCurrentLocation = () => {
-        // Simulate getting location
-        setCity('Chennai, India');
-        Alert.alert('Location', 'Location detected: Chennai, India');
     };
 
     return (
@@ -75,18 +65,6 @@ export default function ProfileDetailsScreen() {
                     value={email}
                     onChangeText={setEmail}
                 />
-
-                <View>
-                    <Input
-                        label="City / Location"
-                        placeholder="Enter your city"
-                        value={city}
-                        onChangeText={setCity}
-                    />
-                    <TouchableOpacity onPress={handleUseCurrentLocation} style={styles.locationLink}>
-                        <Text style={styles.locationLinkText}>Use Current Location</Text>
-                    </TouchableOpacity>
-                </View>
 
                 <Button
                     title="Save & Continue"
@@ -129,15 +107,5 @@ const styles = StyleSheet.create({
     },
     button: {
         marginTop: THEME.spacing.l,
-    },
-    locationLink: {
-        position: 'absolute',
-        right: 0,
-        top: 0,
-    },
-    locationLinkText: {
-        color: COLORS.primary,
-        fontSize: 12,
-        fontWeight: 'bold',
     },
 });

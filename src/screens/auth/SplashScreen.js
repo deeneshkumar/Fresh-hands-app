@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
 import { COLORS } from '../../constants/colors';
 
+import { StatusBar } from 'expo-status-bar';
+
 const { width } = Dimensions.get('window');
 
 export default function SplashScreen() {
@@ -27,6 +29,7 @@ export default function SplashScreen() {
 
     return (
         <View style={styles.container}>
+            <StatusBar style="light" hidden={true} />
             <Animated.View style={{
                 opacity: titleOpacity,
                 transform: [{ scale: titleScale }],
