@@ -1,53 +1,52 @@
-const GEMINI_API_KEY = 'AIzaSyBjyXTCWTHqsDtqgPNvtDCEpN4mtBGopn4'; // ⚠️ move this to env later
+const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_KEY;
 
-// Use a valid, supported model:
-const MODEL_NAME = 'gemini-1.5-flash';
-// or: const MODEL_NAME = 'gemini-1.5-pro';
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
+export async function sendToGemini(userMessage) {
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: `You are a friendly customer support assistant for the app "Fresh Hands".
 
-export const sendMessageToGemini = async (message) => {
-    try {
-        console.log("Sending message to Gemini...");
+Your role:
+- Help users with OTP login issues, bookings, payments, cancellations, and service partners
+- Use simple Indian English
+- Be polite, calm, and helpful
+- If user greets, greet back
+- If OTP issue, give clear steps
+- Never say you are an AI
+- Never invent order details
 
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents: [
-                    {
-                        parts: [
-                            { text: message }
-                        ]
-                    }
-                ]
-            }),
-        });
+User message:
+${userMessage}`,
+              },
+            ],
+          },
+        ],
+      }),
+    });
 
-        const data = await response.json();
+    const data = await response.json();
+    console.log('Gemini raw response:', JSON.stringify(data, null, 2));
 
-        if (!response.ok) {
-            console.error('Gemini API Error Details:', JSON.stringify(data, null, 2));
-            throw new Error(data.error?.message || 'Error from Gemini API');
-        }
+    const text =
+      data?.candidates?.[0]?.content?.parts
+        ?.map(p => p.text)
+        .join(' ')
+        ?.trim();
 
-        if (
-            data.candidates &&
-            data.candidates[0] &&
-            data.candidates[0].content &&
-            data.candidates[0].content.parts &&
-            data.candidates[0].content.parts[0].text
-        ) {
-            return data.candidates[0].content.parts[0].text;
-        } else {
-            console.log('Unexpected Gemini response format:', JSON.stringify(data, null, 2));
-            return "I'm sorry, I couldn't understand that. Please try again.";
-        }
-
-    } catch (error) {
-        console.error('Gemini Request Failed:', error);
-        return "I'm having trouble connecting to the support AI. Please ensure you have internet access.";
-    }
-};
+    return text || "Sorry, I couldn’t understand that. Can you rephrase?";
+  } catch (error) {
+    console.error('Gemini error:', error);
+    return 'Something went wrong. Please try again in a moment.';
+  }
+}

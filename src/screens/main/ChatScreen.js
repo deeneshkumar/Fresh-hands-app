@@ -1,8 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, SafeAreaView, Keyboard } from 'react-native';
-import { Send, ArrowLeft, MoreVertical, Phone } from 'lucide-react-native';
+import React, { useState, useRef } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    FlatList,
+    TextInput,
+    TouchableOpacity,
+    KeyboardAvoidingView,
+    Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Send, ArrowLeft, Phone } from 'lucide-react-native';
 import { THEME } from '../../constants/theme';
 import { COLORS } from '../../constants/colors';
+import { sendToGemini } from '../../services/gemini';
 
 export default function ChatScreen({ navigation }) {
     const [messages, setMessages] = useState([
@@ -10,84 +21,116 @@ export default function ChatScreen({ navigation }) {
             id: '1',
             text: 'Hello! How can we help you today?',
             isUser: false,
-            timestamp: new Date(Date.now() - 60000),
-        }
+            timestamp: new Date(),
+        },
     ]);
     const [inputText, setInputText] = useState('');
+    const [loading, setLoading] = useState(false);
     const flatListRef = useRef(null);
 
-    const handleSend = () => {
-        if (inputText.trim()) {
-            const newMessage = {
-                id: Date.now().toString(),
-                text: inputText.trim(),
-                isUser: true,
+    const handleSend = async () => {
+        if (!inputText.trim() || loading) return;
+
+        const userText = inputText.trim();
+
+        const userMessage = {
+            id: Date.now().toString(),
+            text: userText,
+            isUser: true,
+            timestamp: new Date(),
+        };
+
+        setMessages(prev => [...prev, userMessage]);
+        setInputText('');
+        setLoading(true);
+
+        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+
+        try {
+            const replyText = await sendToGemini(userText);
+
+            const botMessage = {
+                id: (Date.now() + 1).toString(),
+                text: replyText,
+                isUser: false,
                 timestamp: new Date(),
             };
-            setMessages(prev => [...prev, newMessage]);
-            setInputText('');
 
-            // Scroll to bottom
-            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-
-            // Simulate bot response
-            setTimeout(() => {
-                const botResponse = {
-                    id: (Date.now() + 1).toString(),
-                    text: "Thanks for reaching out. An agent will connect with you shortly.",
+            setMessages(prev => [...prev, botMessage]);
+        } catch (error) {
+            setMessages(prev => [
+                ...prev,
+                {
+                    id: (Date.now() + 2).toString(),
+                    text: 'Sorry, something went wrong. Please try again.',
                     isUser: false,
                     timestamp: new Date(),
-                };
-                setMessages(prev => [...prev, botResponse]);
-                setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-            }, 1000);
+                },
+            ]);
+        } finally {
+            setLoading(false);
+            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
         }
     };
 
-    const formatTime = (date) => {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    };
+    const formatTime = date =>
+        date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const renderMessage = ({ item }) => (
-        <View style={[
-            styles.messageWrapper,
-            item.isUser ? styles.userMessageWrapper : styles.botMessageWrapper
-        ]}>
-            <View style={[
-                styles.messageContainer,
-                item.isUser ? styles.userMessage : styles.botMessage
-            ]}>
-                <Text style={[
-                    styles.messageText,
-                    item.isUser ? styles.userMessageText : styles.botMessageText
-                ]}>{item.text}</Text>
-                <Text style={[
-                    styles.timestamp,
-                    item.isUser ? styles.userTimestamp : styles.botTimestamp
-                ]}>{formatTime(item.timestamp)}</Text>
+        <View
+            style={[
+                styles.messageWrapper,
+                item.isUser ? styles.userMessageWrapper : styles.botMessageWrapper,
+            ]}
+        >
+            <View
+                style={[
+                    styles.messageContainer,
+                    item.isUser ? styles.userMessage : styles.botMessage,
+                ]}
+            >
+                <Text
+                    style={[
+                        styles.messageText,
+                        item.isUser ? styles.userMessageText : styles.botMessageText,
+                    ]}
+                >
+                    {item.text}
+                </Text>
+                <Text
+                    style={[
+                        styles.timestamp,
+                        item.isUser ? styles.userTimestamp : styles.botTimestamp,
+                    ]}
+                >
+                    {formatTime(item.timestamp)}
+                </Text>
             </View>
         </View>
     );
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+            {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <ArrowLeft color={COLORS.text} size={24} />
                 </TouchableOpacity>
+
                 <View style={styles.headerInfo}>
                     <Text style={styles.headerTitle}>Customer Support</Text>
-                    <Text style={styles.headerSubtitle}>Typically replies in 5 mins</Text>
+                    <Text style={styles.headerSubtitle}>AI Support • Online</Text>
                 </View>
+
                 <TouchableOpacity style={styles.iconButton}>
                     <Phone color={COLORS.primary} size={20} />
                 </TouchableOpacity>
             </View>
 
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-                style={styles.keyboardContainer}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+                style={{ flex: 1 }}
             >
                 <FlatList
                     ref={flatListRef}
@@ -96,9 +139,13 @@ export default function ChatScreen({ navigation }) {
                     keyExtractor={item => item.id}
                     contentContainerStyle={styles.messageList}
                     showsVerticalScrollIndicator={false}
-                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
                 />
 
+                {loading && (
+                    <Text style={styles.typingText}>Support is typing…</Text>
+                )}
+
+                {/* Input */}
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={styles.input}
@@ -107,12 +154,14 @@ export default function ChatScreen({ navigation }) {
                         placeholder="Type a message..."
                         placeholderTextColor={COLORS.textLight}
                         multiline
-                        maxLength={500}
                     />
                     <TouchableOpacity
                         onPress={handleSend}
-                        style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
-                        disabled={!inputText.trim()}
+                        disabled={!inputText.trim() || loading}
+                        style={[
+                            styles.sendButton,
+                            (!inputText.trim() || loading) && styles.sendButtonDisabled,
+                        ]}
                     >
                         <Send color={COLORS.white} size={20} />
                     </TouchableOpacity>
@@ -126,7 +175,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
-        paddingTop: Platform.OS === 'android' ? 30 : 0,
     },
     header: {
         flexDirection: 'row',
@@ -135,12 +183,6 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.surface,
         borderBottomWidth: 1,
         borderBottomColor: COLORS.border,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        zIndex: 10,
     },
     backButton: {
         width: 40,
@@ -166,16 +208,11 @@ const styles = StyleSheet.create({
     iconButton: {
         padding: 8,
     },
-    keyboardContainer: {
-        flex: 1,
-    },
     messageList: {
         padding: THEME.spacing.m,
-        paddingBottom: 20,
     },
     messageWrapper: {
         marginBottom: THEME.spacing.m,
-        width: '100%',
     },
     userMessageWrapper: {
         alignItems: 'flex-end',
@@ -186,8 +223,7 @@ const styles = StyleSheet.create({
     messageContainer: {
         maxWidth: '80%',
         padding: THEME.spacing.m,
-        borderRadius: 20,
-        elevation: 1,
+        borderRadius: 18,
     },
     userMessage: {
         backgroundColor: COLORS.primary,
@@ -201,7 +237,6 @@ const styles = StyleSheet.create({
     },
     messageText: {
         fontSize: 16,
-        lineHeight: 22,
     },
     userMessageText: {
         color: COLORS.white,
@@ -215,10 +250,16 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-end',
     },
     userTimestamp: {
-        color: 'rgba(255, 255, 255, 0.7)',
+        color: 'rgba(255,255,255,0.7)',
     },
     botTimestamp: {
         color: COLORS.textLight,
+    },
+    typingText: {
+        marginLeft: 20,
+        marginBottom: 6,
+        color: COLORS.textLight,
+        fontSize: 12,
     },
     inputContainer: {
         flexDirection: 'row',
@@ -236,7 +277,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         marginRight: THEME.spacing.m,
         color: COLORS.text,
-        maxHeight: 100,
+        maxHeight: 120,
     },
     sendButton: {
         width: 48,
@@ -245,10 +286,8 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary,
         justifyContent: 'center',
         alignItems: 'center',
-        elevation: 2,
     },
     sendButtonDisabled: {
         backgroundColor: COLORS.textLight,
-        elevation: 0,
     },
 });
