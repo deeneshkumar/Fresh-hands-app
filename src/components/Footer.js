@@ -11,7 +11,7 @@ export default function Footer() {
             <Image
                 source={require('../../assets/footer_branding.jpg')}
                 style={styles.brandingImage}
-                resizeMode="cover"
+                resizeMode="contain"
             />
             <View style={styles.copyrightContainer}>
                 <Text style={styles.copyrightText}>© 2024 Fresh Hands. All rights reserved.</Text>
@@ -19,7 +19,6 @@ export default function Footer() {
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         marginTop: 10,

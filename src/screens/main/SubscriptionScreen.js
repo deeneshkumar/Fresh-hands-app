@@ -106,7 +106,7 @@ export default function SubscriptionScreen() {
                             } else {
                                 setLoading(false);
                                 Alert.alert('Low Balance', 'Please verify your wallet balance.', [
-                                    { text: 'Top Up', onPress: () => navigation.navigate('AddMoney') },
+                                    { text: 'Add Money', onPress: () => navigation.navigate('AddMoney') },
                                     { text: 'Cancel', style: 'cancel' }
                                 ]);
                             }

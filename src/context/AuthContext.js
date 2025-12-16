@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AuthContext = createContext();
 
@@ -7,79 +8,107 @@ export const AuthProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [location, setLocation] = useState(null);
 
+    // Initial Mock Addresses (Only used if nothing in storage)
+    const INITIAL_ADDRESSES = [
+        { id: '1', type: 'Home', flat: '402', street: 'Sunshine Apts, Anna Nagar', city: 'Chennai', pincode: '600040', address: 'Flat 402, Sunshine Apts, Anna Nagar, Chennai - 600040' },
+        { id: '2', type: 'Work', flat: '', street: 'Tech Park, OMR', city: 'Chennai', pincode: '600097', address: 'Tech Park, OMR, Chennai - 600097' }
+    ];
+
+    const [savedAddresses, setSavedAddresses] = useState([]);
+
+    // Load Data on Mount
     useEffect(() => {
-        // Simulate checking for stored user
-        setTimeout(() => {
-            setIsLoading(false);
-        }, 1000);
+        const loadData = async () => {
+            try {
+                // Load User
+                const storedUser = await AsyncStorage.getItem('user');
+                if (storedUser) setUser(JSON.parse(storedUser));
+
+                // Load Addresses
+                const storedAddr = await AsyncStorage.getItem('savedAddresses');
+                if (storedAddr) {
+                    setSavedAddresses(JSON.parse(storedAddr));
+                } else {
+                    setSavedAddresses(INITIAL_ADDRESSES); // Fallback to mock for testing
+                }
+            } catch (e) {
+                console.error("Failed to load auth data", e);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadData();
     }, []);
 
-    const login = (userData) => {
+    // Helper to persist user
+    const persistUser = (userData) => {
         setUser(userData);
+        if (userData) AsyncStorage.setItem('user', JSON.stringify(userData));
+        else AsyncStorage.removeItem('user');
+    };
+
+    // Helper to persist addresses
+    const persistAddresses = (addrs) => {
+        setSavedAddresses(addrs);
+        AsyncStorage.setItem('savedAddresses', JSON.stringify(addrs));
+    };
+
+    const login = (userData) => {
+        persistUser(userData);
     };
 
     const logout = () => {
-        setUser(null);
+        persistUser(null);
         setLocation(null);
     };
 
     const updateLocation = (loc) => {
         setLocation(loc);
+        // Do we persist current location? Usually transient, but can be nice. 
+        // Let's keep it transient for now per session.
     };
 
     const updateUserProfile = (updatedData) => {
-        setUser(prevUser => ({ ...prevUser, ...updatedData }));
+        const newUser = { ...user, ...updatedData };
+        persistUser(newUser);
     };
 
     const addToWallet = (amount) => {
-        setUser(prevUser => ({
-            ...prevUser,
-            walletBalance: (prevUser?.walletBalance || 0) + parseFloat(amount)
-        }));
+        if (!user) return;
+        const newUser = { ...user, walletBalance: (user.walletBalance || 0) + parseFloat(amount) };
+        persistUser(newUser);
     };
 
     const deductFromWallet = (amount) => {
         if (!user || (user.walletBalance || 0) < amount) return false;
-        setUser(prevUser => ({
-            ...prevUser,
-            walletBalance: (prevUser?.walletBalance || 0) - parseFloat(amount)
-        }));
+        const newUser = { ...user, walletBalance: (user.walletBalance || 0) - parseFloat(amount) };
+        persistUser(newUser);
         return true;
     };
 
     const joinClub = () => {
-        setUser(prevUser => ({ ...prevUser, isClubMember: true }));
+        if (!user) return;
+        const newUser = { ...user, isClubMember: true };
+        persistUser(newUser);
     };
 
-    // Mock Initial Addresses
-    const [savedAddresses, setSavedAddresses] = useState([
-        { id: '1', type: 'Home', flat: '402', street: 'Sunshine Apts, Anna Nagar', city: 'Chennai', pincode: '600040', address: 'Flat 402, Sunshine Apts, Anna Nagar, Chennai - 600040' },
-        { id: '2', type: 'Work', flat: '', street: 'Tech Park, OMR', city: 'Chennai', pincode: '600097', address: 'Tech Park, OMR, Chennai - 600097' }
-    ]);
-
     const saveAddress = (newAddr) => {
-        setSavedAddresses(prev => {
-            // "Save last three entered" -> Keep max 3. 
-            // If adding new, and count >= 3, remove oldest? 
-            // Or just allow 3? User said "upto save last three enteres address". 
-            // Usually implies a Recent History or a limited list.
-            // I'll assume standard list limited to 3. If full, remove oldest or prevent?
-            // "automatically in the saved address , upto save last three" implies rolling buffer.
-            // So if 3 exist, remove first, add new.
-            let updated = [...prev, newAddr];
-            if (updated.length > 3) {
-                updated = updated.slice(updated.length - 3); // Keep last 3
-            }
-            return updated;
-        });
+        // FIFO logic (Max 3)
+        let updated = [...savedAddresses, newAddr];
+        if (updated.length > 3) {
+            updated = updated.slice(updated.length - 3);
+        }
+        persistAddresses(updated);
     };
 
     const deleteAddress = (id) => {
-        setSavedAddresses(prev => prev.filter(a => a.id !== id));
+        const updated = savedAddresses.filter(a => a.id !== id);
+        persistAddresses(updated);
     };
 
     const editAddress = (id, updatedFields) => {
-        setSavedAddresses(prev => prev.map(a => a.id === id ? { ...a, ...updatedFields } : a));
+        const updated = savedAddresses.map(a => a.id === id ? { ...a, ...updatedFields } : a);
+        persistAddresses(updated);
     };
 
     return (

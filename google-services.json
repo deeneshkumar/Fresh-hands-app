@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "540760568798",
+    "project_id": "fresh-hands-otp",
+    "storage_bucket": "fresh-hands-otp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:540760568798:android:3546ac13c3f442da3a634f",
+        "android_client_info": {
+          "package_name": "com.freshhands.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqk9tbAXABNuXDR-ftVm9cRi_vt4cLtZY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

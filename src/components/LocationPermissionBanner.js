@@ -35,16 +35,10 @@ export default function LocationPermissionBanner() {
             const { status } = await Location.getForegroundPermissionsAsync();
             setPermissionStatus(status);
 
-            // If we don't have a location set in context OR permission is not granted, show modal
-            // User requested: "disappears... once done its job"
-            if ((status !== 'granted' || !location) && status !== 'denied') {
-                // Note: If 'denied' purely, we might not want to pester every time unless we have a specific logic,
-                // But request says "banner enlarge", so we show it if needed.
-                // Simpler: Show if !location.
-                if (!location) {
-                    setVisible(true);
-                }
-            } else if (location) {
+            // Always show if no location is selected, allowing manual entry even if denied
+            if (!location) {
+                setVisible(true);
+            } else {
                 setVisible(false);
             }
         } catch (error) {

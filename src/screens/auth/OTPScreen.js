@@ -1,139 +1,153 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { Text, StyleSheet, View, TextInput, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
+
 import Button from '../../components/Button';
-import Input from '../../components/Input';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 
-import { isValidOTP } from '../../utils/validation';
-
 export default function OTPScreen({ navigation, route }) {
-    const { phoneNumber, generatedOtp } = route.params || { phoneNumber: '+91 XXXXX XXXXX', generatedOtp: null };
-    const [otp, setOtp] = useState('');
-    const [timer, setTimer] = useState(30);
+  const { confirmation, phoneNumber } = route.params;
+  const [otp, setOtp] = useState(['', '', '', '', '', '']); // Array for 6 digits
+  const [loading, setLoading] = useState(false);
+  const inputs = useRef([]);
 
-    // Simulate receiving SMS by pre-filling or showing alert if not auto-filled
-    useEffect(() => {
-        if (generatedOtp) {
-            // For demo purposes, we can't really "receive" an SMS on simulator/emulator without external tools.
-            // But we can show it again if the user missed the previous alert.
-            // Or we can just let them type it.
-        }
-    }, [generatedOtp]);
+  useEffect(() => {
+    // Auto-focus first input on mount
+    if (inputs.current[0]) {
+      setTimeout(() => inputs.current[0].focus(), 100);
+    }
+  }, []);
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setTimer((prev) => (prev > 0 ? prev - 1 : 0));
-            if (timer === 0) clearInterval(interval);
-        }, 1000);
-        return () => clearInterval(interval);
-    }, [timer]);
+  const handleChangeText = (text, index) => {
+    // Only accept numbers
+    const cleanText = text.replace(/[^0-9]/g, '');
 
-    const handleVerify = () => {
-        if (otp == generatedOtp || isValidOTP(otp)) { // Allow valid format if generatedOtp is missing (dev mode)
-            navigation.replace('ProfileDetails', { phoneNumber });
-        } else {
-            Alert.alert('Invalid OTP', 'The code you entered is incorrect. Please try again.');
-        }
-    };
+    if (cleanText.length === 0) return; // Handle backspace in onKeyPress
 
-    const handleResend = () => {
-        setTimer(30);
-        const newOtp = Math.floor(1000 + Math.random() * 9000);
-        Alert.alert('OTP Resent', `Your new OTP is: ${newOtp}`);
-        // In a real app we would update the generatedOtp state or context, but here for simple flow:
-        // We just let the user type any valid 4 digit code if we lose sync, or simple isValidOTP check.
-    };
+    const newOtp = [...otp];
+    newOtp[index] = cleanText.charAt(cleanText.length - 1); // Take last char if multiple
+    setOtp(newOtp);
 
-    return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.content}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ArrowLeft color={COLORS.text} size={24} />
-                </TouchableOpacity>
-                <Text style={styles.title}>Verify Phone Number</Text>
-                <Text style={styles.subtitle}>
-                    Enter the 4-digit code sent to {phoneNumber}
-                </Text>
+    // Auto focus next
+    if (index < 5 && cleanText) {
+      inputs.current[index + 1].focus();
+    }
 
-                <Input
-                    placeholder="0000"
-                    keyboardType="number-pad"
-                    value={otp}
-                    onChangeText={setOtp}
-                    style={styles.input}
-                    maxLength={4}
-                    textContentType="oneTimeCode"
-                    autoComplete="sms-otp"
-                />
+    // Auto submit if last digit filled
+    if (index === 5 && cleanText) {
+      // Optional: could trigger verify here
+    }
+  };
 
-                <View style={styles.timerContainer}>
-                    <Text style={styles.timerText}>
-                        Resend code in {timer}s
-                    </Text>
-                    {timer === 0 && (
-                        <TouchableOpacity onPress={handleResend}>
-                            <Text style={styles.resendLink}>Resend</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
+  const handleKeyPress = (e, index) => {
+    if (e.nativeEvent.key === 'Backspace') {
+      if (!otp[index] && index > 0) {
+        // Current empty, go back and delete prev
+        const newOtp = [...otp];
+        newOtp[index - 1] = '';
+        setOtp(newOtp);
+        inputs.current[index - 1].focus();
+      } else {
+        // Just clear current
+        const newOtp = [...otp];
+        newOtp[index] = '';
+        setOtp(newOtp);
+      }
+    }
+  };
 
-                <Button title="Verify" onPress={handleVerify} style={styles.button} />
-            </View>
-        </SafeAreaView>
-    );
+  const handleVerify = async () => {
+    const otpString = otp.join('');
+    if (otpString.length !== 6) {
+      Alert.alert('Incomplete OTP', 'Please enter all 6 digits');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await confirmation.confirm(otpString);
+      navigation.replace('ProfileDetails', { phoneNumber });
+    } catch (err) {
+      console.log('OTP Verify Error:', err);
+      Alert.alert('Verification failed', 'Wrong or expired OTP');
+      setOtp(['', '', '', '', '', '']); // Reset on fail
+      inputs.current[0].focus();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <ArrowLeft color={COLORS.text} size={24} />
+        <Text style={styles.backButtonText}>Change Number</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.title}>Verify OTP</Text>
+      <Text style={styles.subtitle}>Sent to {phoneNumber}</Text>
+
+      <View style={styles.otpContainer}>
+        {otp.map((digit, index) => (
+          <TextInput
+            key={index}
+            ref={(ref) => inputs.current[index] = ref}
+            style={[
+              styles.otpBox,
+              digit ? styles.otpBoxFilled : null,
+              // Highlight current focus could be done with state but simple logic suffices
+            ]}
+            keyboardType="number-pad"
+            maxLength={1} // But we handle text change logic
+            value={digit}
+            onChangeText={(text) => handleChangeText(text, index)}
+            onKeyPress={(e) => handleKeyPress(e, index)}
+            selectTextOnFocus
+          />
+        ))}
+      </View>
+
+      <Button
+        title={loading ? 'Verifying…' : 'Verify'}
+        onPress={handleVerify}
+        disabled={loading}
+      />
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: COLORS.background,
-    },
-    content: {
-        padding: THEME.spacing.l,
-        flex: 1,
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#F5F5F5',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: THEME.spacing.l,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: COLORS.text,
-        marginBottom: THEME.spacing.s,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: COLORS.textLight,
-        marginBottom: THEME.spacing.xl,
-        lineHeight: 22,
-    },
-    input: {
-        textAlign: 'center',
-        letterSpacing: 8,
-        fontSize: 24,
-    },
-    timerContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: THEME.spacing.l,
-    },
-    timerText: {
-        color: COLORS.textLight,
-    },
-    resendLink: {
-        color: COLORS.primary,
-        fontWeight: 'bold',
-    },
-    button: {
-        marginTop: THEME.spacing.m,
-    },
+  container: { flex: 1, padding: THEME.spacing.l, backgroundColor: COLORS.background },
+  backButton: {
+    marginBottom: THEME.spacing.m,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  backButtonText: { color: COLORS.primary, fontSize: 16, fontWeight: '600' },
+  title: { fontSize: 28, fontWeight: 'bold', color: COLORS.text, marginBottom: 8 },
+  subtitle: { fontSize: 16, color: COLORS.textLight, marginBottom: THEME.spacing.xl },
+  otpContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: THEME.spacing.xl,
+  },
+  otpBox: {
+    width: 45,
+    height: 55,
+    borderWidth: 1,
+    borderColor: 'rgba(221, 221, 221, 1)',
+    borderRadius: 12,
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    backgroundColor: COLORS.white,
+    color: COLORS.text,
+  },
+  otpBoxFilled: {
+    borderColor: 'rgba(78, 210, 118, 1)',
+    backgroundColor: 'rgba(78, 210, 118, 0.1)', //green
+  },
 });
