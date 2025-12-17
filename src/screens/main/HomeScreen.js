@@ -49,9 +49,11 @@ export default function HomeScreen({ navigation }) {
                     <View style={styles.header}>
                         <View style={styles.headerLeft}>
                             <TouchableOpacity style={styles.logoButton} onPress={() => navigation.openDrawer && navigation.openDrawer()}>
-                                <View style={styles.logoIcon}>
-                                    <Text style={styles.logoText}>FH</Text>
-                                </View>
+                                <Image
+                                    source={require('../../../assets/adaptive-icon.jpg')}
+                                    style={styles.logoImage}
+                                    resizeMode="cover"
+                                />
                             </TouchableOpacity>
 
                             <View style={styles.locationWrapper}>
@@ -270,23 +272,17 @@ const styles = StyleSheet.create({
     logoButton: {
         marginRight: THEME.spacing.m,
         backgroundColor: COLORS.white,
-        borderRadius: 20,
-        padding: 4,
+        borderRadius: 20, // Circular (half of 40)
+        padding: 0,
         borderWidth: 1,
         borderColor: COLORS.border,
+        overflow: 'hidden',
+        width: 40,
+        height: 40,
     },
-    logoIcon: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: COLORS.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    logoText: {
-        color: COLORS.white,
-        fontWeight: 'bold',
-        fontSize: 12,
+    logoImage: {
+        width: '100%',
+        height: '100%',
     },
     locationWrapper: {
         justifyContent: 'center',
