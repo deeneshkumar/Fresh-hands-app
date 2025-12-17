@@ -15,7 +15,6 @@ export default function ProfileDetailsScreen({ navigation }) {
     const [email, setEmail] = useState(user?.email || '');
     const [phone, setPhone] = useState(user?.phone || '');
     const [city, setCity] = useState(user?.city || '');
-    const [address, setAddress] = useState(user?.address || ''); // Added address state
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSave = async () => {
@@ -27,7 +26,7 @@ export default function ProfileDetailsScreen({ navigation }) {
         setIsLoading(true);
         // Simulate API call
         setTimeout(() => {
-            updateUserProfile({ name, email, phone, city, address }); // Included address in update
+            updateUserProfile({ name, email, phone, city, address });
             setIsLoading(false);
             Alert.alert('Success', 'Profile updated successfully', [
                 { text: 'OK', onPress: () => navigation.goBack() }
@@ -53,11 +52,13 @@ export default function ProfileDetailsScreen({ navigation }) {
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                     <View style={styles.avatarContainer}>
                         <View style={styles.avatar}>
-                            <User color={COLORS.white} size={40} />
+                            {user?.name ? (
+                                <Text style={styles.avatarText}>{user.name[0].toUpperCase()}</Text>
+                            ) : (
+                                <User color={COLORS.white} size={40} />
+                            )}
                         </View>
-                        <TouchableOpacity style={styles.changePhotoBtn}>
-                            <Text style={styles.changePhotoText}>Change Photo</Text>
-                        </TouchableOpacity>
+                        {/* Photo picker removed as per request */}
                     </View>
 
                     <View style={styles.form}>
@@ -183,5 +184,10 @@ const styles = StyleSheet.create({
     },
     saveBtn: {
         marginTop: THEME.spacing.l,
+    },
+    avatarText: {
+        fontSize: 40,
+        fontWeight: 'bold',
+        color: COLORS.white,
     },
 });

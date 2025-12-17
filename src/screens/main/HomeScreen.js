@@ -11,7 +11,6 @@ import { useOrder } from '../../context/OrderContext';
 import Banner from '../../components/Banner';
 import ServiceCard from '../../components/ServiceCard';
 import Footer from '../../components/Footer';
-import OrderDetailsModal from './OrderDetailsModal';
 import LocationPermissionBanner from '../../components/LocationPermissionBanner';
 
 import AddressModal from './AddressModal';
@@ -19,7 +18,6 @@ import AddressModal from './AddressModal';
 export default function HomeScreen({ navigation }) {
     const { user, location, updateLocation } = useAuth(); // Use location from context
     const { activeOrder } = useOrder();
-    const [showOrderModal, setShowOrderModal] = useState(false);
     const [showAddressModal, setShowAddressModal] = useState(false);
 
     const handleSelectLocation = (loc) => {
@@ -205,12 +203,12 @@ export default function HomeScreen({ navigation }) {
                     activeOrder && (
                         <TouchableOpacity
                             style={styles.liveOrderCard}
-                            onPress={() => setShowOrderModal(true)}
+                            onPress={() => navigation.navigate('OrderConfirmation', { orderDetails: activeOrder, service: activeOrder.service || { name: activeOrder.serviceName || 'Service' } })}
                             activeOpacity={0.9}
                         >
                             <View style={styles.liveOrderInfo}>
                                 <Text style={styles.liveOrderTitle}>Ongoing Service</Text>
-                                <Text style={styles.liveOrderStatus}>{activeOrder.status} • {activeOrder.eta}</Text>
+                                <Text style={styles.liveOrderStatus}>{activeOrder.status} • {activeOrder.eta || 'Tracking...'}</Text>
                             </View>
                             <View style={styles.liveOrderBadge}>
                                 <Text style={styles.liveOrderBadgeText}>Track</Text>
@@ -218,12 +216,6 @@ export default function HomeScreen({ navigation }) {
                         </TouchableOpacity>
                     )
                 }
-
-                <OrderDetailsModal
-                    visible={showOrderModal}
-                    onClose={() => setShowOrderModal(false)}
-                    order={activeOrder}
-                />
             </SafeAreaView >
             <LocationPermissionBanner />
         </View>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Switch, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, ShoppingBag, Tag, Gift, Settings, MessageCircle, Phone, LogOut, ChevronRight, Wallet, Moon, ArrowLeft, Crown } from 'lucide-react-native';
 import { COLORS } from '../../constants/colors';
@@ -36,7 +36,13 @@ export default function ProfileScreen({ navigation }) {
                         <ArrowLeft color={COLORS.text} size={24} />
                     </TouchableOpacity>
                     <View style={styles.avatar}>
-                        <User color={COLORS.white} size={40} />
+                        {user?.name ? (
+                            <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#FFF' }}>
+                                {user.name[0].toUpperCase()}
+                            </Text>
+                        ) : (
+                            <User color={COLORS.white} size={40} />
+                        )}
                     </View>
                     <View style={styles.userInfo}>
                         <Text style={styles.userName}>{user?.name || 'Guest User'}</Text>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Clock, MapPin, CreditCard, Wallet, Banknote, Navigation, Zap, ArrowLeft, CheckCircle2, Square, CheckSquare } from 'lucide-react-native';
@@ -13,96 +13,101 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 const MAP_STYLE = [
     {
-        "elementType": "geometry",
-        "stylers": [{ "color": "#f5f5f5" }]
+        "featureType": "all",
+        "elementType": "geometry.fill",
+        "stylers": [{ "weight": "2.00" }]
     },
     {
+        "featureType": "all",
+        "elementType": "geometry.stroke",
+        "stylers": [{ "color": "#9c9c9c" }]
+    },
+    {
+        "featureType": "all",
+        "elementType": "labels.text",
+        "stylers": [{ "visibility": "on" }]
+    },
+    {
+        "featureType": "landscape",
+        "elementType": "all",
+        "stylers": [{ "color": "#f2f2f2" }]
+    },
+    {
+        "featureType": "landscape",
+        "elementType": "geometry.fill",
+        "stylers": [{ "color": "#ffffff" }]
+    },
+    {
+        "featureType": "landscape.man_made",
+        "elementType": "geometry.fill",
+        "stylers": [{ "color": "#ffffff" }]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "all",
+        "stylers": [{ "visibility": "on" }]
+    },
+    {
+        "featureType": "road",
+        "elementType": "all",
+        "stylers": [{ "saturation": -100 }, { "lightness": 45 }]
+    },
+    {
+        "featureType": "road",
+        "elementType": "geometry.fill",
+        "stylers": [{ "color": "#eeeeee" }]
+    },
+    {
+        "featureType": "road",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#7b7b7b" }]
+    },
+    {
+        "featureType": "road",
+        "elementType": "labels.text.stroke",
+        "stylers": [{ "color": "#ffffff" }]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "all",
+        "stylers": [{ "visibility": "simplified" }]
+    },
+    {
+        "featureType": "road.arterial",
         "elementType": "labels.icon",
         "stylers": [{ "visibility": "off" }]
     },
     {
-        "elementType": "labels.text.fill",
-        "stylers": [{ "color": "#616161" }]
+        "featureType": "transit",
+        "elementType": "all",
+        "stylers": [{ "visibility": "off" }]
     },
     {
+        "featureType": "water",
+        "elementType": "all",
+        "stylers": [{ "color": "#46bcec" }, { "visibility": "on" }]
+    },
+    {
+        "featureType": "water",
+        "elementType": "geometry.fill",
+        "stylers": [{ "color": "#c8d7d4" }]
+    },
+    {
+        "featureType": "water",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#070707" }]
+    },
+    {
+        "featureType": "water",
         "elementType": "labels.text.stroke",
-        "stylers": [{ "color": "#f5f5f5" }]
-    },
-    {
-        "featureType": "administrative.land_parcel",
-        "elementType": "labels.text.fill",
-        "stylers": [{ "color": "#bdbdbd" }]
-    },
-    {
-        "featureType": "poi",
-        "elementType": "geometry",
-        "stylers": [{ "color": "#eeeeee" }]
-    },
-    {
-        "featureType": "poi",
-        "elementType": "labels.text.fill",
-        "stylers": [{ "color": "#757575" }]
-    },
-    {
-        "featureType": "poi.park",
-        "elementType": "geometry",
-        "stylers": [{ "color": "#e5e5e5" }]
-    },
-    {
-        "featureType": "poi.park",
-        "elementType": "labels.text.fill",
-        "stylers": [{ "color": "#9e9e9e" }]
-    },
-    {
-        "featureType": "road",
-        "elementType": "geometry",
         "stylers": [{ "color": "#ffffff" }]
-    },
-    {
-        "featureType": "road.arterial",
-        "elementType": "labels.text.fill",
-        "stylers": [{ "color": "#757575" }]
-    },
-    {
-        "featureType": "road.highway",
-        "elementType": "geometry",
-        "stylers": [{ "color": "#dadada" }]
-    },
-    {
-        "featureType": "road.highway",
-        "elementType": "labels.text.fill",
-        "stylers": [{ "color": "#616161" }]
-    },
-    {
-        "featureType": "road.local",
-        "elementType": "labels.text.fill",
-        "stylers": [{ "color": "#9e9e9e" }]
-    },
-    {
-        "featureType": "transit.line",
-        "elementType": "geometry",
-        "stylers": [{ "color": "#e5e5e5" }]
-    },
-    {
-        "featureType": "transit.station",
-        "elementType": "geometry",
-        "stylers": [{ "color": "#eeeeee" }]
-    },
-    {
-        "featureType": "water",
-        "elementType": "geometry",
-        "stylers": [{ "color": "#c9c9c9" }]
-    },
-    {
-        "featureType": "water",
-        "elementType": "labels.text.fill",
-        "stylers": [{ "color": "#9e9e9e" }]
     }
 ];
 
 export default function BookingScreen({ route, navigation }) {
     const { service } = route.params;
     const { user, location } = useAuth(); // Use global location if available
+    const mapRef = useRef(null);
 
     // Booking Type: 'instant' or 'schedule'
     const [bookingType, setBookingType] = useState(null); // No default selection
@@ -164,12 +169,14 @@ export default function BookingScreen({ route, navigation }) {
             let geocoded = await Location.geocodeAsync(addrText);
             if (geocoded.length > 0) {
                 const { latitude, longitude } = geocoded[0];
-                setMapRegion({
+                const region = {
                     latitude,
                     longitude,
-                    latitudeDelta: 0.005,
-                    longitudeDelta: 0.005,
-                });
+                    latitudeDelta: 0.002,
+                    longitudeDelta: 0.002,
+                };
+                setMapRegion(region);
+                mapRef.current?.animateToRegion(region, 1000);
             }
         } catch (error) {
             console.log('Geocoding error:', error);
@@ -194,12 +201,14 @@ export default function BookingScreen({ route, navigation }) {
             Alert.alert('Location', 'Fetching current location...');
             let location = await Location.getCurrentPositionAsync({});
 
-            setMapRegion({
+            const region = {
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
-                latitudeDelta: 0.005,
-                longitudeDelta: 0.005,
-            });
+                latitudeDelta: 0.002,
+                longitudeDelta: 0.002,
+            };
+            setMapRegion(region);
+            mapRef.current?.animateToRegion(region, 1000);
 
             // Reverse Geocode
             let addressResponse = await Location.reverseGeocodeAsync({
@@ -270,6 +279,10 @@ export default function BookingScreen({ route, navigation }) {
                 date: finalDate,
                 time: finalTime,
                 address: address.trim(),
+                coordinates: {
+                    latitude: mapRegion?.latitude,
+                    longitude: mapRegion?.longitude
+                },
                 paymentMethod,
                 billDetails: {
                     itemTotal,
@@ -457,11 +470,16 @@ export default function BookingScreen({ route, navigation }) {
                     {mapRegion && (
                         <View style={styles.mapPreviewContainer}>
                             <MapView
+                                ref={mapRef}
                                 provider={PROVIDER_GOOGLE}
                                 style={styles.map}
                                 region={mapRegion}
                                 scrollEnabled={false}
                                 zoomEnabled={false}
+                                pitchEnabled={false}
+                                showsBuildings={true}
+                                showsIndoors={true}
+                                showsPointsOfInterest={true}
                                 customMapStyle={MAP_STYLE}
                             >
                                 <Marker coordinate={mapRegion} />

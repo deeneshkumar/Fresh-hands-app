@@ -39,7 +39,7 @@ export default function SupportScreen({ navigation }) {
                     icon={MessageCircle}
                     title="Chat with Us"
                     subtitle="Start a live chat for instant support"
-                    onPress={() => navigation.navigate('FloatingChatButton')}
+                    onPress={() => navigation.navigate('Chat')} // Assuming 'Chat' is the route name for ChatScreen
                 />
                 <SupportItem
                     icon={Phone}
@@ -57,7 +57,7 @@ export default function SupportScreen({ navigation }) {
                     icon={HelpCircle}
                     title="FAQs"
                     subtitle="Frequently Asked Questions"
-                    onPress={() => { }}
+                    onPress={() => { }} // Placeholder if no FAQ screen yet
                 />
             </View>
         </SafeAreaView>
