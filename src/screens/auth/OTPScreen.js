@@ -2,16 +2,22 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Text, StyleSheet, View, TextInput, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
+import auth from '@react-native-firebase/auth';
 
 import Button from '../../components/Button';
 import { COLORS } from '../../constants/colors';
 import { THEME } from '../../constants/theme';
 
 export default function OTPScreen({ navigation, route }) {
-  const { confirmation, phoneNumber } = route.params;
+  const { confirmation: initialConfirmation, phoneNumber } = route.params;
+  const [confirm, setConfirm] = useState(initialConfirmation);
   const [otp, setOtp] = useState(['', '', '', '', '', '']); // Array for 6 digits
   const [loading, setLoading] = useState(false);
+  const [timer, setTimer] = useState(60);
+  const [attempts, setAttempts] = useState(0);
   const inputs = useRef([]);
+
+  const MAX_ATTEMPTS = 5;
 
   useEffect(() => {
     // Auto-focus first input on mount
@@ -19,6 +25,16 @@ export default function OTPScreen({ navigation, route }) {
       setTimeout(() => inputs.current[0].focus(), 100);
     }
   }, []);
+
+  useEffect(() => {
+    let interval;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
 
   const handleChangeText = (text, index) => {
     // Only accept numbers
@@ -58,6 +74,26 @@ export default function OTPScreen({ navigation, route }) {
     }
   };
 
+  const handleResend = async () => {
+    if (timer > 0) return;
+
+    try {
+      setLoading(true);
+      const newConfirmation = await auth().signInWithPhoneNumber(phoneNumber);
+      setConfirm(newConfirmation);
+      setTimer(60);
+      setAttempts(0);
+      setOtp(['', '', '', '', '', '']);
+      Alert.alert('OTP Resent', 'A new code has been sent to your number.');
+      setTimeout(() => inputs.current[0].focus(), 100);
+    } catch (err) {
+      console.log('Resend Error:', err);
+      Alert.alert('Error', 'Failed to resend OTP. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleVerify = async () => {
     const otpString = otp.join('');
     if (otpString.length !== 6) {
@@ -65,13 +101,32 @@ export default function OTPScreen({ navigation, route }) {
       return;
     }
 
+    if (attempts >= MAX_ATTEMPTS) {
+      Alert.alert(
+        'Too many attempts',
+        'You have exceeded the maximum number of attempts. Please resend the OTP to try again.'
+      );
+      return;
+    }
+
     try {
       setLoading(true);
-      await confirmation.confirm(otpString);
+      await confirm.confirm(otpString);
       navigation.replace('ProfileDetails', { phoneNumber });
     } catch (err) {
       console.log('OTP Verify Error:', err);
-      Alert.alert('Verification failed', 'Wrong or expired OTP');
+
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+
+      const remaining = MAX_ATTEMPTS - newAttempts;
+
+      if (remaining > 0) {
+        Alert.alert('Verification failed', `Incorrect OTP. You have ${remaining} attempts remaining.`);
+      } else {
+        Alert.alert('Limit Reached', 'You have entered the wrong OTP 5 times. Please resend OTP.');
+      }
+
       setOtp(['', '', '', '', '', '']); // Reset on fail
       inputs.current[0].focus();
     } finally {
@@ -114,6 +169,18 @@ export default function OTPScreen({ navigation, route }) {
         onPress={handleVerify}
         disabled={loading}
       />
+
+      <View style={styles.resendContainer}>
+        {timer > 0 ? (
+          <Text style={styles.timerText}>
+            Resend OTP in <Text style={styles.timerBold}>{timer}s</Text>
+          </Text>
+        ) : (
+          <TouchableOpacity onPress={handleResend} disabled={loading}>
+            <Text style={styles.resendLink}>Resend OTP</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -141,13 +208,30 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(221, 221, 221, 1)',
     borderRadius: 12,
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '400',
     textAlign: 'center',
     backgroundColor: COLORS.white,
     color: COLORS.text,
   },
   otpBoxFilled: {
-    borderColor: 'rgba(78, 210, 118, 1)',
-    backgroundColor: 'rgba(78, 210, 118, 0.1)', //green
+    borderColor: 'hsla(18, 49%, 79%, 1.00)',
+    backgroundColor: 'rgba(245, 244, 244, 0.63)', //green
+  },
+  resendContainer: {
+    alignItems: 'center',
+    marginTop: THEME.spacing.l,
+  },
+  timerText: {
+    color: COLORS.textLight,
+    fontSize: 14,
+  },
+  timerBold: {
+    color: COLORS.text,
+    fontWeight: 'bold',
+  },
+  resendLink: {
+    color: COLORS.primary,
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
